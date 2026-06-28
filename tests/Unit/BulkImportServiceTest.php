@@ -99,8 +99,9 @@ class BulkImportServiceTest extends TestCase
             $this->service->parse(base_path('tests/fixtures/leads_missing_column.xlsx'));
             $this->fail('InvalidColumnExceptionが投げられませんでした');
         } catch (InvalidColumnException $e) {
-            // leads_missing_column.xlsxにはメールアドレス列が欠けているため日本語ヘッダーで検証する
-            $this->assertContains('メールアドレス', $e->getMissingColumns());
+            // leads_missing_column.xlsxにはemail列が欠けているためconfigから日本語ヘッダーを取得して検証する
+            $emailHeader = config('bulk_import.columns.email');
+            $this->assertContains($emailHeader, $e->getMissingColumns());
         }
     }
 }
