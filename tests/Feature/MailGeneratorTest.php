@@ -117,6 +117,23 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['api']);
     }
 
+    // AIの応答に「件名：」が含まれない場合にエラーになること
+    public function test_AIの応答に件名が含まれない場合エラーになること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    // 件名フォーマットなしの応答
+                    ['type' => 'text', 'text' => "こちらは件名なしの本文だけのテキストです。"],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertSessionHasErrors(['api']);
+    }
+
     // レスポンスのcontent.0.textがnullの場合にエラーメッセージが表示されること
     public function test_APIレスポンスが不正な形式のときエラーメッセージが表示されること(): void
     {

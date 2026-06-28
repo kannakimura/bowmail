@@ -109,6 +109,12 @@ PROMPT;
         preg_match('/本文：\s*([\s\S]+)/u', $text, $bodyMatch);
 
         $subject = trim($subjectMatch[1] ?? '');
+
+        // 件名が取れなかった場合はAIの応答フォーマット不正としてエラーを返す
+        if ($subject === '') {
+            return back()->withInput()->withErrors(['api' => 'AIからの応答が想定外の形式でした。もう一度お試しください。']);
+        }
+
         // 本文が取れなかった場合はレスポンス全体を表示するフォールバック
         $body = trim($bodyMatch[1] ?? $text);
 
