@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\BulkImportService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 // 一括メール生成機能のFeatureテスト
@@ -155,8 +156,18 @@ class BulkMailTest extends TestCase
     }
 
     // パース中に例外が発生するとアップロード画面へ戻りfileエラーが表示されること
+    // またスタックトレース付きでLog::error()が呼ばれることも検証する
     public function test_パース例外発生時にアップロード画面へ戻りエラーが表示されること(): void
     {
+        Log::shouldReceive('error')
+            ->once()
+            ->withArgs(function (string $message, array $context) {
+                // exceptionキーに例外オブジェクトが渡されてスタックトレースが記録されること
+                return $message === 'Excelパース失敗'
+                    && isset($context['exception'])
+                    && $context['exception'] instanceof \Throwable;
+            });
+
         $this->mock(BulkImportService::class, function ($mock) {
             $mock->shouldReceive('parse')
                 ->once()
