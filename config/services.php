@@ -36,7 +36,9 @@ return [
     ],
 
     'anthropic' => [
-        'key' => env('ANTHROPIC_API_KEY'),
+        'key'   => env('ANTHROPIC_API_KEY'),
+        // モデル名を.envで上書きできるようにしておく（廃止・環境差分に対応）
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
     ],
 
 ];
