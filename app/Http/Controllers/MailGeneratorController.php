@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use App\Http\Requests\GenerateMailRequest;
+use App\Services\GenerateMailService;
 
 // リードナーチャリングメール生成機能のコントローラー
+// HTTPの入口として、入力受け取り・Service呼び出し・画面返却のみを担当する
 class MailGeneratorController extends Controller
 {
     // 入力フォーム画面を表示する
@@ -16,109 +16,21 @@ class MailGeneratorController extends Controller
         return view('mail-generator', ['input' => []]);
     }
 
-    // フォームの入力値を受け取り、Claude APIでメールを生成して結果を返す
-    public function generate(Request $request)
+    // バリデーション済みの入力をServiceに渡してメールを生成し、結果をビューに返す
+    public function generate(GenerateMailRequest $request, GenerateMailService $service)
     {
-        // バリデーション：必須項目とトーンの選択肢を検証する
-        // company_nameは任意だがnullable|stringを指定して配列送信によるエラーを防ぐ
-        // visited_page・phaseはin:でホワイトリスト検証してプロンプト注入を防ぐ
-        $request->validate([
-            'company_name'   => 'nullable|string|max:100',
-            'visited_page'   => 'required|in:料金ページ,導入事例ページ,機能紹介ページ,資料ダウンロードページ,お問い合わせページ（未送信）,トップページ',
-            'phase'          => 'required|in:認知（初回訪問）,比較検討中,導入検討中,失注後フォロー',
-            'sender_name'    => 'required|string|max:100',
-            'sender_company' => 'required|string|max:100',
-            'tone'           => 'required|in:polite,casual',
+        $data   = $request->validated();
+        $result = $service->generate($data);
+
+        // Serviceがerrorキーを返した場合はフォームに戻す
+        if (isset($result['error'])) {
+            return back()->withInput()->withErrors(['api' => $result['error']]);
+        }
+
+        return view('mail-generator', [
+            'subject' => $result['subject'],
+            'body'    => $result['body'],
+            'input'   => $request->all(),
         ]);
-
-        // 入力値を変数に取り出す（company_nameは任意のため空文字をデフォルトに）
-        $companyName   = $request->input('company_name', '');
-        $visitedPage   = $request->input('visited_page');
-        $phase         = $request->input('phase');
-        $senderName    = $request->input('sender_name');
-        $senderCompany = $request->input('sender_company');
-        // トーンをプロンプト向けの日本語表現に変換する
-        $tone = $request->input('tone') === 'polite' ? '丁寧（ビジネスフォーマル）' : 'カジュアル（親しみやすい）';
-
-        // 会社名が入力されている場合とない場合でプロンプトの文言を分ける
-        $companyLine = $companyName ? "相手の会社名：{$companyName}" : '相手の会社名：不明';
-
-        // Claude APIへ送るプロンプトを組み立てる
-        $prompt = <<<PROMPT
-あなたはBtoBマーケティング担当者のメール文章作成を支援するAIです。
-以下の情報をもとに、リードナーチャリング用のメール件名と本文を1案作成してください。
-
-{$companyLine}
-訪問したページ：{$visitedPage}
-検討フェーズ：{$phase}
-送信者名：{$senderName}
-送信者会社名：{$senderCompany}
-メールのトーン：{$tone}
-
-出力フォーマット：
-件名：（ここに件名）
-
-本文：
-（ここに本文）
-
-注意：
-- 押しつけがましくなく、相手の関心に寄り添う内容にする
-- 本文は200〜300文字程度
-- 署名は含めない
-PROMPT;
-
-        // APIキーが未設定の場合はAPIを呼ばずにエラーを返す
-        if (empty(config('services.anthropic.key'))) {
-            return back()->withInput()->withErrors(['api' => 'AIサービスの設定が不完全です。管理者にお問い合わせください。']);
-        }
-
-        // Claude APIを呼び出す（タイムアウト・接続エラーはConnectionExceptionで捕捉する）
-        // timeout(30)：30秒応答がなければConnectionExceptionを発生させてプロセスブロックを防ぐ
-        try {
-            $response = Http::withHeaders([
-                'x-api-key'         => config('services.anthropic.key'),
-                'anthropic-version' => '2023-06-01',
-                'content-type'      => 'application/json',
-            ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-                // モデル名はconfig経由で取得し、.envで環境ごとに切り替えられるようにする
-                'model'      => config('services.anthropic.model'),
-                'max_tokens' => 1024,
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]);
-        } catch (ConnectionException $e) {
-            // タイムアウトや接続失敗の場合は500にせずフォームに戻す
-            return back()->withInput()->withErrors(['api' => 'AIサーバーに接続できませんでした。しばらくしてから再度お試しください。']);
-        }
-
-        // HTTPステータスが4xx/5xxの場合はエラーメッセージを返す
-        if ($response->failed()) {
-            return back()->withInput()->withErrors(['api' => 'メール生成に失敗しました。しばらくしてから再度お試しください。']);
-        }
-
-        // レスポンスのテキストを取得する
-        $text = $response->json('content.0.text');
-
-        // content.0.textがnullや文字列以外だった場合はエラーとして扱う
-        if (!is_string($text) || $text === '') {
-            return back()->withInput()->withErrors(['api' => 'AIからの応答が不正でした。しばらくしてから再度お試しください。']);
-        }
-
-        // 件名と本文を正規表現で取り出す
-        preg_match('/件名：(.+)/u', $text, $subjectMatch);
-        preg_match('/本文：\s*([\s\S]+)/u', $text, $bodyMatch);
-
-        $subject = trim($subjectMatch[1] ?? '');
-
-        // 件名が取れなかった場合はAIの応答フォーマット不正としてエラーを返す
-        if ($subject === '') {
-            return back()->withInput()->withErrors(['api' => 'AIからの応答が想定外の形式でした。もう一度お試しください。']);
-        }
-
-        // 本文が取れなかった場合はレスポンス全体を表示するフォールバック
-        $body = trim($bodyMatch[1] ?? $text);
-
-        return view('mail-generator', compact('subject', 'body'))->with('input', $request->all());
     }
 }
