@@ -17,6 +17,16 @@
 
     <a href="{{ route('home') }}" class="nav-link">← 1件生成に戻る</a>
 
+    @if ($errors->any())
+        <div class="error-box">
+            <ul class="error-list">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card">
         <h2>Excelファイルをアップロード</h2>
         <form method="POST" action="{{ route('bulk.upload') }}" enctype="multipart/form-data">
@@ -24,6 +34,7 @@
             <div class="form-group form-group--mb20">
                 <label for="file">リストファイル（.xlsx）<span class="required-mark"> *</span></label>
                 <input type="file" id="file" name="file" accept=".xlsx" required>
+                @error('file')<span class="field-error">{{ $message }}</span>@enderror
                 <span class="hint">列構成：会社名 / メールアドレス / 訪問ページ / フェーズ</span>
             </div>
 

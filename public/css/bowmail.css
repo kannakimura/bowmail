@@ -103,6 +103,9 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 
 .footer { text-align: center; font-size: 12px; color: #9ca3af; padding: 20px 0 40px; }
 
+/* エラーリスト（箇条書き記号なし） */
+.error-list { list-style: none; }
+
 /* 必須マーク */
 .required-mark { color: #e53e3e; }
 
