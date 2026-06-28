@@ -7,6 +7,21 @@ use Tests\TestCase;
 // 一括メール生成機能のFeatureテスト
 class BulkMailTest extends TestCase
 {
+    // バリデーションを通過する有効なペイロードを返す
+    private function validPayload(): array
+    {
+        return [
+            'file'           => \Illuminate\Http\UploadedFile::fake()->create(
+                'list.xlsx',
+                100,
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ),
+            'sender_name'    => '田中 太郎',
+            'sender_company' => 'クラウドサーカス株式会社',
+            'tone'           => 'polite',
+        ];
+    }
+
     // GET /bulk でアップロード画面が表示されること
     public function test_アップロード画面が表示されること(): void
     {
@@ -53,31 +68,18 @@ class BulkMailTest extends TestCase
     // 有効なxlsxファイルをPOSTするとアップロード画面へリダイレクトされること（405にならないこと）
     public function test_POST_bulk_uploadが405にならないこと(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create('list.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-
-        $response = $this->post(route('bulk.upload'), ['file' => $file]);
+        $response = $this->post(route('bulk.upload'), $this->validPayload());
 
         // Phase 1-3実装前はアップロード画面へのリダイレクトが返ること
         $response->assertRedirect(route('bulk'));
     }
 
     // POST /bulk/upload後に入力値がold()で保持されてビューに反映されること（withInput確認）
-    // fileも添付してバリデーションを通過させController側のwithInput()を検証する
+    // validPayload()でバリデーションを通過させController側のwithInput()を検証する
     public function test_POST_bulk_upload後に入力値がビューに保持されること(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create(
-            'list.xlsx',
-            100,
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        );
-
         // followingRedirects()でリダイレクト先まで追従し、old()がビューに反映されることを確認する
-        $response = $this->followingRedirects()->post(route('bulk.upload'), [
-            'file'           => $file,
-            'sender_name'    => '田中 太郎',
-            'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => 'polite',
-        ]);
+        $response = $this->followingRedirects()->post(route('bulk.upload'), $this->validPayload());
 
         $response->assertStatus(200);
         $response->assertSee('田中 太郎');
@@ -107,9 +109,10 @@ class BulkMailTest extends TestCase
     // xlsx以外のファイルをアップロードするとバリデーションエラーになること
     public function test_xlsx以外のファイルをアップロードするとエラーになること(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create('malicious.exe', 100, 'application/octet-stream');
+        $payload         = $this->validPayload();
+        $payload['file'] = \Illuminate\Http\UploadedFile::fake()->create('malicious.exe', 100, 'application/octet-stream');
 
-        $response = $this->post(route('bulk.upload'), ['file' => $file]);
+        $response = $this->post(route('bulk.upload'), $payload);
 
         $response->assertSessionHasErrors(['file']);
     }
@@ -117,21 +120,25 @@ class BulkMailTest extends TestCase
     // 5MBを超えるファイルをアップロードするとバリデーションエラーになること
     public function test_5MBを超えるファイルをアップロードするとエラーになること(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create('large.xlsx', 6000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $payload         = $this->validPayload();
+        $payload['file'] = \Illuminate\Http\UploadedFile::fake()->create('large.xlsx', 6000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
-        $response = $this->post(route('bulk.upload'), ['file' => $file]);
+        $response = $this->post(route('bulk.upload'), $payload);
 
         $response->assertSessionHasErrors(['file']);
     }
 
     // POST /bulk/uploadに6回連続リクエストすると429(Too Many Requests)になること
+    // 固定IPを使うことで他テストのリクエスト数に影響されない独立したレート検証を保証する
     public function test_POST_bulk_uploadに連続リクエストするとスロットリングされること(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->post(route('bulk.upload'));
+            $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])
+                ->post(route('bulk.upload'), $this->validPayload());
         }
 
-        $response = $this->post(route('bulk.upload'));
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.1'])
+            ->post(route('bulk.upload'), $this->validPayload());
         $response->assertStatus(429);
     }
 
@@ -150,15 +157,16 @@ class BulkMailTest extends TestCase
     {
         $content = $this->get('/bulk')->content();
 
-        // lookaheadで属性順に依存せず同一タグ内にname・accept・requiredが存在することを検証する
+        // <input>に限定し、name・accept・空白区切りrequiredが順不同で存在することを検証する
         $this->assertMatchesRegularExpression(
-            '/<[^>]*(?=.*name="file")(?=.*accept="\.xlsx")(?=.*required)[^>]*>/',
+            '/<input[^>]*name="file"[^>]*accept="\.xlsx"[^>]*(?<!\w)required(?!\w)[^>]*>/',
             $content,
             'ファイル入力にaccept=".xlsx"とrequiredが付いていません'
         );
+        // <input|select|textarea>に限定し、空白区切りの required 属性を検出する
         foreach (['sender_name', 'sender_company', 'tone'] as $field) {
             $this->assertMatchesRegularExpression(
-                '/<[^>]*(?=.*name="' . $field . '")(?=.*required)[^>]*>/',
+                '/<(?:input|select|textarea)[^>]*name="' . $field . '"[^>]*(?<!\w)required(?!\w)[^>]*>/',
                 $content,
                 "{$field} フィールドにrequired属性が付いていません"
             );
