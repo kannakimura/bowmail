@@ -136,8 +136,8 @@ class GenerateMailServiceTest extends TestCase
 
         Http::assertSent(function ($request) {
             // プロンプトにcasualの日本語ラベルが含まれること
-            // config未定義時にnullをstr_containsに渡すとTypeErrorになるため空文字をデフォルトにする
-            $label = (string) config('mail_options.tones.casual', '');
+            // デフォルトを実際のラベル値にすることでconfig未定義時も空文字にならず検証が常に有効になる
+            $label = (string) config('mail_options.tones.casual', 'カジュアル（親しみやすい）');
             return str_contains($request->data()['messages'][0]['content'], $label);
         });
     }
