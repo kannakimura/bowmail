@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidColumnException;
 use App\Http\Requests\BulkUploadRequest;
 use App\Services\BulkImportService;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,11 @@ class BulkMailController extends Controller
             $rows = $this->bulkImportService->parse(
                 $request->file('file')->getPathname()
             );
+        } catch (InvalidColumnException $e) {
+            // 列構成不正はユーザー操作で解決できるためログは不要でエラーメッセージを返す
+            return back()
+                ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
+                ->withErrors(['file' => '必須列が見つかりません。テンプレートのExcelファイルを使用してください。']);
         } catch (Throwable $e) {
             // ファイル破損・xlsx偽装等のパースエラーはスタックトレース付きでログに記録してユーザーに安全なメッセージを返す
             Log::error('Excelパース失敗', ['exception' => $e]);
