@@ -328,7 +328,10 @@ class BulkMailTest extends TestCase
     // GET /bulk/preview がconfig定義の列ヘッダーをテーブルに表示すること
     public function test_プレビュー画面がconfig定義の列ヘッダーを表示すること(): void
     {
-        $columns  = config('bulk_import.columns', []);
+        $columns = config('bulk_import.columns', []);
+        // bulk_import.columnsが空だとforeachが回らず検証が無効になるため事前にガードする
+        $this->assertNotEmpty($columns, 'bulk_import.columnsが空のためヘッダー検証が無効です');
+
         $response = $this->withSession([
             'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
             'bulk_rows'  => [array_fill_keys(array_keys($columns), '')],
@@ -341,6 +344,8 @@ class BulkMailTest extends TestCase
     }
 
     // GET /bulk/preview に「やり直す」ボタンがあり /bulk へ戻れること
+    // hrefとテキストが同一<a>タグ内に存在することを正規表現で検証し、
+    // 上部ナビのリンクだけにroute('bulk')が残る場合でもテストが通らないことを保証する
     public function test_プレビュー画面にやり直すボタンが含まれること(): void
     {
         $response = $this->withSession([
@@ -349,8 +354,13 @@ class BulkMailTest extends TestCase
         ])->get(route('bulk.preview'));
 
         $response->assertStatus(200);
-        $response->assertSee(route('bulk'), false);
-        $response->assertSee('やり直す');
+        // href属性とテキスト「やり直す」が同一<a>タグ内に存在することを検証する
+        $bulkUrl = route('bulk');
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="' . preg_quote($bulkUrl, '/') . '"[^>]*>\s*やり直す\s*<\/a>/',
+            $response->content(),
+            '「やり直す」ボタンのhrefが ' . $bulkUrl . ' になっていません'
+        );
     }
 
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
