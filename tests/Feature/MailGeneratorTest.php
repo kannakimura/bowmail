@@ -71,6 +71,31 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['phase']);
     }
 
+    // toneにホワイトリスト外の値を送った場合にエラーになること
+    public function test_toneに不正な値を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['tone'] = '不正なトーン';
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['tone']);
+    }
+
+    // toneのバリデーションエラー時に画面にエラーメッセージが表示されること
+    public function test_toneのバリデーションエラーがビューに表示されること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['tone'] = '不正なトーン';
+
+        $response = $this->post('/generate', $payload);
+
+        // エラー後にフォームへリダイレクトされ、セッションにエラーが入ること
+        $response->assertSessionHasErrors(['tone']);
+        // Bladeの@error('tone')がレンダリングされることをリダイレクト先で確認する
+        $response->assertRedirect();
+    }
+
     // company_nameに配列を送った場合にバリデーションエラーになること
     public function test_company_nameに配列を送るとバリデーションエラーになること(): void
     {
