@@ -292,9 +292,10 @@ class MailGeneratorTest extends TestCase
     {
         $html = $this->get('/')->content();
 
+        // <input|select|textarea>に限定し、空白区切りの required 属性を検出する
         foreach (['visited_page', 'phase', 'tone', 'sender_name', 'sender_company'] as $field) {
             $this->assertMatchesRegularExpression(
-                '/<[^>]*(?=.*name="' . $field . '")(?=.*required)[^>]*>/',
+                '/<(?:input|select|textarea)[^>]*name="' . $field . '"[^>]*(?<!\w)required(?!\w)[^>]*>/',
                 $html,
                 "{$field} フィールドにrequired属性が付いていません"
             );
