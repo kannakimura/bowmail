@@ -20,10 +20,10 @@ class BulkUploadRequest extends FormRequest
             // xlsxのみ許可・最大5MB・必須
             'file'           => ['required', 'file', 'mimes:xlsx', 'max:5120'],
             // 送信者情報・トーンはUIと同様に必須・GenerateMailRequestと同じ制約を適用する
-            // toneはconfig/mail_options.phpのtonesキーをRule::in()で参照しハードコードを避ける
+            // toneはstring+Rule::in()でスカラー型を強制しconfig参照のホワイトリスト検証を行う
             'sender_name'    => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'sender_company' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'tone'           => ['required', Rule::in(array_keys(config('mail_options.tones', [])))],
+            'tone'           => ['required', 'string', Rule::in(array_keys(config('mail_options.tones', [])))],
         ];
     }
 }

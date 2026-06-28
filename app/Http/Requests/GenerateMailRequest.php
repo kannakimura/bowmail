@@ -24,11 +24,12 @@ class GenerateMailRequest extends FormRequest
     {
         return [
             'company_name'   => ['nullable', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'visited_page'   => ['required', Rule::in(config('mail_options.visited_pages', []))],
-            'phase'          => ['required', Rule::in(config('mail_options.phases', []))],
+            // string を先に検証してスカラー型を強制し、配列等が後続のRule::in/Serviceに渡るのを防ぐ
+            'visited_page'   => ['required', 'string', Rule::in(config('mail_options.visited_pages', []))],
+            'phase'          => ['required', 'string', Rule::in(config('mail_options.phases', []))],
             'sender_name'    => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'sender_company' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'tone'           => ['required', Rule::in(array_keys(config('mail_options.tones', [])))],
+            'tone'           => ['required', 'string', Rule::in(array_keys(config('mail_options.tones', [])))],
         ];
     }
 }
