@@ -135,8 +135,8 @@ class GenerateMailServiceTest extends TestCase
         (new GenerateMailService())->generate($data);
 
         Http::assertSent(function ($request) {
-            // プロンプトにカジュアルの日本語表現が含まれていること
-            return str_contains($request->data()['messages'][0]['content'], 'カジュアル（親しみやすい）');
+            // プロンプトにcasualの日本語ラベルが含まれること（ラベルはconfigから参照してハードコードを避ける）
+            return str_contains($request->data()['messages'][0]['content'], config('mail_options.tones.casual'));
         });
     }
 
