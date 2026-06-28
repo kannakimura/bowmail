@@ -150,6 +150,28 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['api']);
     }
 
+    // .envでモデルを上書きしたとき、そのモデル名でAPIが呼ばれること
+    public function test_ANTHROPICMODELの設定値でAPIが呼ばれること(): void
+    {
+        // モデルを環境変数で差し替える
+        config(['services.anthropic.model' => 'claude-opus-4-8']);
+
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $this->post('/generate', $this->validPayload());
+
+        // 送信されたリクエストボディに差し替えたモデル名が含まれていること
+        Http::assertSent(function ($request) {
+            return $request->data()['model'] === 'claude-opus-4-8';
+        });
+    }
+
     // トップページが正常に表示されること
     public function test_トップページが表示されること(): void
     {
