@@ -1,0 +1,57 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+
+// mail-generator.blade.phpのコピーボタン実装テスト
+class CopyButtonTest extends TestCase
+{
+    // Clipboard API非対応環境向けのfallbackCopy関数が実装されていること
+    public function test_コピーボタンにfallbackCopy関数が実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            'fallbackCopy',
+            $content,
+            'fallbackCopy関数が実装されていません'
+        );
+    }
+
+    // navigator.clipboardの存在チェックが実装されていること（非セキュアコンテキスト対策）
+    public function test_clipboardAPIの存在チェックが実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            'navigator.clipboard && navigator.clipboard.writeText',
+            $content,
+            'Clipboard APIの存在チェックが実装されていません'
+        );
+    }
+
+    // コピー失敗時にユーザーへフィードバックするメッセージが実装されていること
+    public function test_コピー失敗時のフィードバックが実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            'コピー失敗',
+            $content,
+            'コピー失敗時のフィードバックメッセージが実装されていません'
+        );
+    }
+
+    // execCommand('copy')がフォールバックとして使われていること
+    public function test_execCommandがフォールバックとして実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            "execCommand('copy')",
+            $content,
+            "execCommand('copy')フォールバックが実装されていません"
+        );
+    }
+}
