@@ -279,6 +279,53 @@ DB::select('SELECT * FROM users WHERE email = ?', [$email]);
 
 ---
 
+## コーディング安全規則
+
+コードレビューで繰り返し指摘された頻度の高いルール。実装前に必ず確認すること。
+
+### 1. `config()` には必ずデフォルト値を指定する
+
+```php
+// 悪い例：未定義時にnullになりTypeError/配列アクセスエラーが発生する
+config('mail_options.tones')[$key]
+
+// 良い例：デフォルト[]を指定して安全にアクセスする
+config('mail_options.tones', [])[$key] ?? $fallback
+```
+
+- デフォルトは `[]`（配列期待）または `''`（文字列期待）を用途に合わせて使う
+- デフォルトを空文字にすると `str_contains($str, '')` が常に `true` になるため、検証用途では実際の値をデフォルトにする
+
+### 2. FormRequest で `Rule::in()` を使う場合は前に `string` を追加する
+
+```php
+// 悪い例：配列を送信されると後続のRule::in/Serviceでエラーになる
+'tone' => ['required', Rule::in([...])],
+
+// 良い例：string制約でスカラー型を強制する
+'tone' => ['required', 'string', Rule::in([...])],
+```
+
+- `visited_page` / `phase` / `tone` など選択肢系フィールドはすべてこの形式に統一する
+
+### 3. Blade のループ内で `config()` を呼ばない
+
+```blade
+{{-- 悪い例：ループ内で毎回config()を評価する --}}
+@foreach(config('mail_options.tones', []) as $value => $label)
+    <option {{ old('tone', array_key_first(config('mail_options.tones', []))) === $value ...}}>
+
+{{-- 良い例：ループ外の@phpブロックで一度だけ変数化する --}}
+@php
+    $tones       = config('mail_options.tones', []);
+    $defaultTone = isset($tones['polite']) ? 'polite' : (array_key_first($tones) ?? '');
+@endphp
+@foreach($tones as $value => $label)
+    <option {{ old('tone', $defaultTone) === $value ...}}>
+```
+
+---
+
 ## 最終方針
 
 短期的に動くコードよりも、**半年後・1年後に安全に変更できるコード**を優先する。
