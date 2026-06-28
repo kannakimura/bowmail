@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailGeneratorController;
+use App\Http\Controllers\BulkMailController;
 
 Route::get('/', [MailGeneratorController::class, 'index'])->name('home');
 
@@ -9,6 +10,9 @@ Route::get('/', [MailGeneratorController::class, 'index'])->name('home');
 Route::post('/generate', [MailGeneratorController::class, 'generate'])
     ->name('generate')
     ->middleware('throttle:5,1');
+
+// 一括メール生成のアップロード画面
+Route::get('/bulk', [BulkMailController::class, 'index'])->name('bulk');
 
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
 // セッションのflashデータから生成結果を受け取って表示する
