@@ -7,10 +7,14 @@ use Tests\TestCase;
 // 一括メール生成機能のFeatureテスト
 class BulkMailTest extends TestCase
 {
-    // テストごとにユニークなIPでPOSTしてスロットリングの干渉を防ぐ
+    // カウンタで決定的にIPを採番してランダム重複によるスロットリング干渉を防ぐ
+    private static int $ipCounter = 0;
+
     private function postWithUniqueIp(string $url, array $data = []): \Illuminate\Testing\TestResponse
     {
-        return $this->withServerVariables(['REMOTE_ADDR' => '127.' . rand(1, 254) . '.' . rand(0, 254) . '.' . rand(1, 254)])
+        $ip = '127.0.1.' . (++self::$ipCounter);
+
+        return $this->withServerVariables(['REMOTE_ADDR' => $ip])
             ->post($url, $data);
     }
 
