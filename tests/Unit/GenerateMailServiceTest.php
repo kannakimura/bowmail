@@ -21,16 +21,16 @@ class GenerateMailServiceTest extends TestCase
     }
 
     // テストで共通して使う入力データ
-    // visited_page・phase・toneはconfig/mail_options.phpの先頭要素を使い選択肢との同期を保つ
+    // dot記法+デフォルト値でconfig未定義・空配列時のTypeError/undefined offsetを防ぐ
     private function validData(): array
     {
         return [
             'company_name'   => 'テスト株式会社',
-            'visited_page'   => config('mail_options.visited_pages')[0],
-            'phase'          => config('mail_options.phases')[0],
+            'visited_page'   => config('mail_options.visited_pages.0', '料金ページ'),
+            'phase'          => config('mail_options.phases.0', '認知（初回訪問）'),
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => array_key_first(config('mail_options.tones')),
+            'tone'           => array_key_first(config('mail_options.tones', [])) ?? 'polite',
         ];
     }
 
@@ -135,8 +135,10 @@ class GenerateMailServiceTest extends TestCase
         (new GenerateMailService())->generate($data);
 
         Http::assertSent(function ($request) {
-            // プロンプトにcasualの日本語ラベルが含まれること（ラベルはconfigから参照してハードコードを避ける）
-            return str_contains($request->data()['messages'][0]['content'], config('mail_options.tones.casual'));
+            // プロンプトにcasualの日本語ラベルが含まれること
+            // config未定義時にnullをstr_containsに渡すとTypeErrorになるため空文字をデフォルトにする
+            $label = (string) config('mail_options.tones.casual', '');
+            return str_contains($request->data()['messages'][0]['content'], $label);
         });
     }
 
