@@ -66,6 +66,11 @@ class MailGeneratorController extends Controller
 - 署名は含めない
 PROMPT;
 
+        // APIキーが未設定の場合はAPIを呼ばずにエラーを返す
+        if (empty(config('services.anthropic.key'))) {
+            return back()->withInput()->withErrors(['api' => 'AIサービスの設定が不完全です。管理者にお問い合わせください。']);
+        }
+
         // Claude APIを呼び出す（タイムアウト・接続エラーはConnectionExceptionで捕捉する）
         try {
             $response = Http::withHeaders([
