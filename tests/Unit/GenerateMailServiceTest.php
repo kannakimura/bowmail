@@ -171,6 +171,30 @@ class GenerateMailServiceTest extends TestCase
         });
     }
 
+    // toneに配列を渡したときTypeErrorにならずpoliteラベルへフォールバックすること
+    public function test_toneに配列を渡したときTypeErrorにならずpoliteラベルが使われること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $data         = $this->validData();
+        $data['tone'] = ['配列型の混入'];
+
+        // 配列が渡ってもIllegal offset typeにならずpoliteラベルへフォールバックすること
+        (new GenerateMailService())->generate($data);
+
+        Http::assertSent(function ($request) {
+            $content       = $request->data()['messages'][0]['content'];
+            $expectedLabel = (string) config('mail_options.tones.polite', '丁寧（ビジネスフォーマル）');
+            return str_contains($content, $expectedLabel);
+        });
+    }
+
     // company_nameが空のとき「相手の会社名：不明」がプロンプトに含まれること
     public function test_会社名未入力のとき不明がプロンプトに含まれること(): void
     {

@@ -146,6 +146,37 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['company_name']);
     }
 
+    // visited_page・phase・toneに配列を送った場合にバリデーションエラーになること（string制約の確認）
+    public function test_visited_pageに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['visited_page'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['visited_page']);
+    }
+
+    public function test_phaseに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['phase'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['phase']);
+    }
+
+    public function test_toneに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['tone'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['tone']);
+    }
+
     // Anthropic APIが5xx系エラーを返した場合にエラーメッセージが表示されること
     public function test_APIが失敗したときエラーメッセージが表示されること(): void
     {
