@@ -20,10 +20,11 @@ class MailGeneratorController extends Controller
     {
         // バリデーション：必須項目とトーンの選択肢を検証する
         // company_nameは任意だがnullable|stringを指定して配列送信によるエラーを防ぐ
+        // visited_page・phaseはin:でホワイトリスト検証してプロンプト注入を防ぐ
         $request->validate([
             'company_name'   => 'nullable|string|max:100',
-            'visited_page'   => 'required|string',
-            'phase'          => 'required|string',
+            'visited_page'   => 'required|in:料金ページ,導入事例ページ,機能紹介ページ,資料ダウンロードページ,お問い合わせページ（未送信）,トップページ',
+            'phase'          => 'required|in:認知（初回訪問）,比較検討中,導入検討中,失注後フォロー',
             'sender_name'    => 'required|string|max:100',
             'sender_company' => 'required|string|max:100',
             'tone'           => 'required|in:polite,casual',
