@@ -13,11 +13,15 @@ Route::post('/generate', [MailGeneratorController::class, 'generate'])
 
 // 一括メール生成のアップロード画面
 Route::get('/bulk', [BulkMailController::class, 'index'])->name('bulk');
-// Excelアップロードの受け口（Phase 1-3以降で実装予定・現状は画面へリダイレクト）
+// Excelアップロードを受け取りパース結果をセッションに保存してプレビューへリダイレクトする
 // ファイル受信・パース時のサーバー負荷を考慮して/generateと同様にスロットリングを設定する
 Route::post('/bulk/upload', [BulkMailController::class, 'upload'])
     ->name('bulk.upload')
     ->middleware('throttle:5,1');
+
+// PRGパターンのGETエンドポイント：upload成功後にリダイレクトされるプレビュー画面
+Route::get('/bulk/preview', [BulkMailController::class, 'preview'])
+    ->name('bulk.preview');
 
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
 // セッションのflashデータから生成結果を受け取って表示する
