@@ -74,6 +74,26 @@ class BulkMailTest extends TestCase
         $response->assertSee('クラウドサーカス株式会社');
     }
 
+    // xlsx以外のファイルをアップロードするとバリデーションエラーになること
+    public function test_xlsx以外のファイルをアップロードするとエラーになること(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('malicious.exe', 100, 'application/octet-stream');
+
+        $response = $this->post(route('bulk.upload'), ['file' => $file]);
+
+        $response->assertSessionHasErrors(['file']);
+    }
+
+    // 5MBを超えるファイルをアップロードするとバリデーションエラーになること
+    public function test_5MBを超えるファイルをアップロードするとエラーになること(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->create('large.xlsx', 6000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $response = $this->post(route('bulk.upload'), ['file' => $file]);
+
+        $response->assertSessionHasErrors(['file']);
+    }
+
     // POST /bulk/uploadに6回連続リクエストすると429(Too Many Requests)になること
     public function test_POST_bulk_uploadに連続リクエストするとスロットリングされること(): void
     {
