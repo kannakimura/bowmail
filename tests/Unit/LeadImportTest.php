@@ -92,7 +92,23 @@ class LeadImportTest extends TestCase
         $this->assertCount(0, $import->getRows());
     }
 
-    // import完了後にHeadingRowFormatterがconfig設定値に戻っていること（通常系）
+    // コンストラクタ生成直後はformatterをグローバルに変更しないこと
+    public function test_コンストラクタ生成時点ではformatterを変更しないこと(): void
+    {
+        $before = config('excel.imports.heading_row.formatter', 'slug');
+
+        new LeadImport();
+
+        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
+        $property   = $reflection->getProperty('formatter');
+        $property->setAccessible(true);
+        $actual = $property->getValue(null);
+
+        // コンストラクタではグローバル設定を変更しないのでimport前後で値が変わらないこと
+        $this->assertNotSame('none', $actual, 'コンストラクタでformatterが変更されています');
+    }
+
+    // import完了後にHeadingRowFormatterがconfig設定値に戻っていること（AfterImportイベント経由）
     public function test_import完了後にHeadingRowFormatterがconfig設定値に戻ること(): void
     {
         $expected = config('excel.imports.heading_row.formatter', 'slug');
@@ -100,50 +116,11 @@ class LeadImportTest extends TestCase
         $import = new LeadImport();
         Excel::import($import, $this->validFile);
 
-        // collection()末尾でformatterが元の値に戻されていること
-        // HeadingRowFormatterの内部状態をリフレクションで検証する
         $reflection = new \ReflectionClass(HeadingRowFormatter::class);
         $property   = $reflection->getProperty('formatter');
         $property->setAccessible(true);
         $actual = $property->getValue(null);
 
         $this->assertSame($expected, $actual);
-    }
-
-    // __destruct()でHeadingRowFormatterがconfig設定値に戻ること（例外系の保険）
-    public function test_destruct後にHeadingRowFormatterがconfig設定値に戻ること(): void
-    {
-        $expected = config('excel.imports.heading_row.formatter', 'slug');
-
-        // インスタンスを生成してすぐ破棄することで__destructを呼ぶ
-        $import = new LeadImport();
-        unset($import);
-
-        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
-        $property   = $reflection->getProperty('formatter');
-        $property->setAccessible(true);
-        $actual = $property->getValue(null);
-
-        $this->assertSame($expected, $actual);
-    }
-
-    // collection()完了後に__destruct()が呼ばれても二重復元で後続のformatter変更を上書きしないこと
-    public function test_collection完了後のdestructは後続のformatter変更を上書きしないこと(): void
-    {
-        $import = new LeadImport();
-        Excel::import($import, $this->validFile);
-
-        // collection()完了後に後続処理が意図的にformatterを変更したと仮定する
-        HeadingRowFormatter::default('none');
-
-        // importインスタンスを破棄しても後続の'none'設定が上書きされないこと
-        unset($import);
-
-        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
-        $property   = $reflection->getProperty('formatter');
-        $property->setAccessible(true);
-        $actual = $property->getValue(null);
-
-        $this->assertSame('none', $actual);
     }
 }
