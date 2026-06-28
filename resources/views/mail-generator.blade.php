@@ -205,12 +205,52 @@ document.querySelector('form').addEventListener('submit', function () {
 });
 
 // コピーボタンの処理
+// navigator.clipboardはHTTPS/localhost以外の非セキュアコンテキストでは未定義になるため
+// 使用できない場合はexecCommand('copy')にフォールバックする
 function copyText(id, btn) {
     const text = document.getElementById(id).innerText;
-    navigator.clipboard.writeText(text).then(() => {
-        btn.textContent = 'コピーしました';
+
+    // Clipboard APIが使える場合（モダンブラウザ・セキュアコンテキスト）
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showCopied(btn);
+        }).catch(() => {
+            // Clipboard APIが拒否された場合（権限エラー等）はフォールバックを試みる
+            fallbackCopy(text, btn);
+        });
+    } else {
+        // Clipboard API非対応環境のフォールバック
+        fallbackCopy(text, btn);
+    }
+}
+
+// execCommandを使った旧来のコピー方法（非セキュアコンテキスト・古いブラウザ向け）
+function fallbackCopy(text, btn) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    // 画面外に配置してスクロールを防ぐ
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    const success = document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    if (success) {
+        showCopied(btn);
+    } else {
+        btn.textContent = 'コピー失敗';
         setTimeout(() => btn.textContent = 'コピー', 2000);
-    });
+    }
+}
+
+// コピー成功時のボタン表示を更新する
+function showCopied(btn) {
+    btn.textContent = 'コピーしました';
+    setTimeout(() => btn.textContent = 'コピー', 2000);
 }
 </script>
 
