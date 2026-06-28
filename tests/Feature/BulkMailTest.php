@@ -264,6 +264,95 @@ class BulkMailTest extends TestCase
         $response->assertStatus(429);
     }
 
+    // GET /bulk/preview がセッションデータありで送信者情報を表示すること
+    public function test_プレビュー画面が送信者情報を表示すること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => [
+                'sender_name'    => '田中 太郎',
+                'sender_company' => 'クラウドサーカス株式会社',
+                'tone'           => 'polite',
+            ],
+            'bulk_rows' => [
+                [
+                    'company_name' => 'テスト株式会社',
+                    'email'        => 'test@example.com',
+                    'visited_page' => '料金ページ',
+                    'phase'        => '比較検討中',
+                ],
+            ],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('田中 太郎');
+        $response->assertSee('クラウドサーカス株式会社');
+        // toneはconfigのラベル（丁寧（ビジネスフォーマル））が表示されること
+        $response->assertSee('丁寧（ビジネスフォーマル）');
+    }
+
+    // GET /bulk/preview がセッションデータありでリード行をテーブル表示すること
+    public function test_プレビュー画面がリード行をテーブル表示すること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => [
+                'sender_name'    => '田中 太郎',
+                'sender_company' => 'クラウドサーカス株式会社',
+                'tone'           => 'polite',
+            ],
+            'bulk_rows' => [
+                [
+                    'company_name' => 'テスト株式会社',
+                    'email'        => 'test@example.com',
+                    'visited_page' => '料金ページ',
+                    'phase'        => '比較検討中',
+                ],
+            ],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('テスト株式会社');
+        $response->assertSee('test@example.com');
+        $response->assertSee('料金ページ');
+        $response->assertSee('比較検討中');
+    }
+
+    // GET /bulk/preview でセッションなし（直アクセス）の場合に空状態メッセージを表示すること
+    public function test_プレビュー画面がセッションなしで空状態メッセージを表示すること(): void
+    {
+        $response = $this->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('表示するデータがありません');
+    }
+
+    // GET /bulk/preview がconfig定義の列ヘッダーをテーブルに表示すること
+    public function test_プレビュー画面がconfig定義の列ヘッダーを表示すること(): void
+    {
+        $columns  = config('bulk_import.columns', []);
+        $response = $this->withSession([
+            'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
+            'bulk_rows'  => [array_fill_keys(array_keys($columns), '')],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        foreach ($columns as $label) {
+            $response->assertSee($label);
+        }
+    }
+
+    // GET /bulk/preview に「やり直す」ボタンがあり /bulk へ戻れること
+    public function test_プレビュー画面にやり直すボタンが含まれること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
+            'bulk_rows'  => [['company_name' => 'A', 'email' => 'a@a.com', 'visited_page' => 'x', 'phase' => 'y']],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee(route('bulk'), false);
+        $response->assertSee('やり直す');
+    }
+
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
     public function test_アップロード画面にインラインスタイルが残っていないこと(): void
     {
