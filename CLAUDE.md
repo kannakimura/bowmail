@@ -208,6 +208,47 @@ app/
 
 ---
 
+### DBアクセス・SQLの方針
+
+DBアクセスは原則として **Eloquent ORM または Query Builder** を使用する。  
+生SQLは可読性・保守性・SQLインジェクションリスク・DB差し替え耐性の観点で危険になりやすいため、安易に使用しない。
+
+**優先順位**:
+1. Eloquent ORM
+2. Query Builder
+3. やむを得ない場合のみ Raw SQL
+
+```php
+// 悪い例（SQLインジェクション危険・ORM恩恵なし）
+DB::select("SELECT * FROM users WHERE email = '$email'");
+
+// 良い例
+User::where('email', $email)->first();
+
+// 複雑な検索も ORM で表現する
+User::query()
+    ->where('company_id', $companyId)
+    ->where('is_active', true)
+    ->whereNull('deleted_at')
+    ->orderByDesc('created_at')
+    ->paginate(20);
+```
+
+**Raw SQL を使う場合は必ず以下を満たすこと**:
+- Eloquent / Query Builder では表現が難しい明確な理由がある
+- パラメータバインディングを使う（ユーザー入力を文字列連結しない）
+- 対象箇所に理由をコメントで残す
+- テストを追加する
+
+```php
+// 許容例（バインディング使用）
+DB::select('SELECT * FROM users WHERE email = ?', [$email]);
+```
+
+通常のCRUD・検索・更新では Raw SQL を使わず、ORM を優先する。
+
+---
+
 ## 実装前チェックリスト
 
 1. この処理の入口はどの Controller か
