@@ -11,4 +11,11 @@ class BulkMailController extends Controller
     {
         return view('bulk');
     }
+
+    // Excelアップロードを受け取る（Phase 1-3以降で実装予定）
+    // 現時点ではアップロード画面へリダイレクトして405を回避する
+    public function upload()
+    {
+        return redirect()->route('bulk');
+    }
 }
