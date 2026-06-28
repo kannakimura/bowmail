@@ -22,7 +22,7 @@ class BulkMailController extends Controller
     public function upload(BulkUploadRequest $request)
     {
         $rows = $this->bulkImportService->parse(
-            $request->file('file')->getRealPath()
+            $request->file('file')->getPathname()
         );
 
         // 送信者情報・パース済み行データをセッションに保存してGETへ引き渡す
