@@ -189,7 +189,8 @@
         </div>
         {{-- 再生成ボタン：requestSubmit()でsubmitイベントを発火してローディング表示も動かす --}}
         <div style="margin-top: 20px;">
-            <button class="btn" style="background:#6b7280;" onclick="document.querySelector('form').requestSubmit(); return false;">もう一度生成する</button>
+            {{-- requestSubmit()はsafari15.4未満等で未実装のためフォールバックを設ける --}}
+            <button class="btn" style="background:#6b7280;" onclick="resubmitForm(); return false;">もう一度生成する</button>
         </div>
     </div>
     @endif
@@ -199,6 +200,17 @@
 <div class="footer">BowMail — Powered by Claude AI</div>
 
 <script>
+// 再生成ボタン：requestSubmit()でsubmitイベントを発火してローディング表示も動かす
+// requestSubmitが未対応のブラウザではsubmit()にフォールバックする（ローディング表示なし）
+function resubmitForm() {
+    const form = document.querySelector('form');
+    if (form.requestSubmit) {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+}
+
 // フォーム送信時にボタンをローディング状態にする
 document.querySelector('form').addEventListener('submit', function () {
     const btn = document.getElementById('submit-btn');

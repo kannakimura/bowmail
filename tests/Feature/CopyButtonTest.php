@@ -73,6 +73,24 @@ class CopyButtonTest extends TestCase
         );
     }
 
+    // 再生成ボタンがrequestSubmitとsubmitのフォールバックを実装していること
+    public function test_再生成ボタンにrequestSubmitフォールバックが実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            'form.requestSubmit',
+            $content,
+            'requestSubmitの呼び出しが実装されていません'
+        );
+
+        $this->assertStringContainsString(
+            'form.submit()',
+            $content,
+            'requestSubmit非対応環境向けのsubmit()フォールバックが実装されていません'
+        );
+    }
+
     // toneフィールドに@errorディレクティブが設定されていること
     public function test_toneフィールドにエラー表示が実装されていること(): void
     {
