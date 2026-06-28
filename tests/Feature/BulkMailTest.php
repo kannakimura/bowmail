@@ -62,10 +62,18 @@ class BulkMailTest extends TestCase
     }
 
     // POST /bulk/upload後に入力値がold()で保持されてビューに反映されること（withInput確認）
+    // fileも添付してバリデーションを通過させController側のwithInput()を検証する
     public function test_POST_bulk_upload後に入力値がビューに保持されること(): void
     {
+        $file = \Illuminate\Http\UploadedFile::fake()->create(
+            'list.xlsx',
+            100,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+
         // followingRedirects()でリダイレクト先まで追従し、old()がビューに反映されることを確認する
         $response = $this->followingRedirects()->post(route('bulk.upload'), [
+            'file'           => $file,
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
             'tone'           => 'polite',
