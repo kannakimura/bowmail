@@ -141,4 +141,17 @@ class MailGeneratorTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('BowMail');
     }
+
+    // GETでトップページを開いたとき$inputが未定義で500にならないこと
+    public function test_トップページで入力フォームの初期値が未定義エラーにならないこと(): void
+    {
+        $response = $this->get('/');
+
+        // フォームの各inputがsession('old')なしでも正常にレンダリングされること
+        $response->assertStatus(200);
+        $response->assertSee('name="company_name"', false);
+        $response->assertSee('name="visited_page"', false);
+        $response->assertSee('name="sender_name"', false);
+        $response->assertSee('name="sender_company"', false);
+    }
 }
