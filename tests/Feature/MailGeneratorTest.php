@@ -19,15 +19,17 @@ class MailGeneratorTest extends TestCase
     }
 
     // テストで共通して使う正常な入力データ
+    // dot記法+デフォルト値でconfig未定義・空配列時のTypeError/undefined offsetを防ぐ
     private function validPayload(): array
     {
         return [
             'company_name'   => 'テスト株式会社',
-            'visited_page'   => '料金ページ',
-            'phase'          => '比較検討中',
+            'visited_page'   => config('mail_options.visited_pages.0', '料金ページ'),
+            'phase'          => config('mail_options.phases.0', '認知（初回訪問）'),
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => 'polite',
+            // politeが存在すればそれを優先しconfigの並び順に依存しないようにする
+            'tone'           => array_key_exists('polite', config('mail_options.tones', [])) ? 'polite' : (array_key_first(config('mail_options.tones', [])) ?? 'polite'),
         ];
     }
 
@@ -142,6 +144,37 @@ class MailGeneratorTest extends TestCase
         $response = $this->post('/generate', $payload);
 
         $response->assertSessionHasErrors(['company_name']);
+    }
+
+    // visited_page・phase・toneに配列を送った場合にバリデーションエラーになること（string制約の確認）
+    public function test_visited_pageに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['visited_page'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['visited_page']);
+    }
+
+    public function test_phaseに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['phase'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['phase']);
+    }
+
+    public function test_toneに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['tone'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['tone']);
     }
 
     // Anthropic APIが5xx系エラーを返した場合にエラーメッセージが表示されること

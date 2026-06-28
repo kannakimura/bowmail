@@ -50,8 +50,13 @@ class GenerateMailService
     // 入力データからClaude APIへ送るプロンプトを組み立てる
     private function buildPrompt(array $data): string
     {
-        // トーンをプロンプト向けの日本語表現に変換する
-        $tone = ($data['tone'] === 'polite') ? '丁寧（ビジネスフォーマル）' : 'カジュアル（親しみやすい）';
+        // toneキーを一度取り出してUndefined indexを防ぐ
+        // バリデーション外から配列等が混入してもIllegal offset typeにならないよう文字列以外は空に落とす
+        // 未知キー時は polite ラベルを優先し、polite が存在しない場合のみ先頭ラベルへフォールバックする
+        $toneKey      = is_string($data['tone'] ?? null) ? $data['tone'] : '';
+        $tones        = config('mail_options.tones', []);
+        $defaultLabel = $tones['polite'] ?? (reset($tones) ?: '');
+        $tone         = $tones[$toneKey] ?? $defaultLabel;
 
         // 会社名が入力されている場合とない場合でプロンプトの文言を分ける
         $companyName = $data['company_name'] ?? '';

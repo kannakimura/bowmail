@@ -52,8 +52,15 @@
                 <div class="form-group">
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone" required>
-                        <option value="polite" {{ old('tone', 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
-                        <option value="casual" {{ old('tone') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
+                        @php
+                            // configの取得とデフォルトキー算出をループ外で1回だけ行いTypeErrorを防ぐ
+                            // politeが存在すればそれをデフォルトにしconfigの並び順に依存しないようにする
+                            $tones       = config('mail_options.tones', []);
+                            $defaultTone = isset($tones['polite']) ? 'polite' : (array_key_first($tones) ?? '');
+                        @endphp
+                        @foreach($tones as $value => $label)
+                            <option value="{{ $value }}" {{ old('tone', $defaultTone) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>

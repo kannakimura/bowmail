@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 // メール生成フォームの入力バリデーションを担当するFormRequest
 // Controllerにvalidateロジックをもたせないためにここへ分離する
@@ -15,17 +16,20 @@ class GenerateMailRequest extends FormRequest
     }
 
     // バリデーションルールを定義する
-    // visited_page・phaseはin:でホワイトリスト検証してプロンプト注入を防ぐ
+    // visited_page・phaseはRule::in()でホワイトリスト検証してプロンプト注入を防ぐ
+    // 選択肢はconfig/mail_options.phpで一元管理しここでは参照のみ行う
+    // Rule::in()に配列を渡すことでカンマを含む選択肢でも安全に動作する
     // 自由入力フィールドはnot_regexで改行を禁止してプロンプト構造の破壊を防ぐ
     public function rules(): array
     {
         return [
             'company_name'   => ['nullable', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'visited_page'   => 'required|in:料金ページ,導入事例ページ,機能紹介ページ,資料ダウンロードページ,お問い合わせページ（未送信）,トップページ',
-            'phase'          => 'required|in:認知（初回訪問）,比較検討中,導入検討中,失注後フォロー',
+            // string を先に検証してスカラー型を強制し、配列等が後続のRule::in/Serviceに渡るのを防ぐ
+            'visited_page'   => ['required', 'string', Rule::in(config('mail_options.visited_pages', []))],
+            'phase'          => ['required', 'string', Rule::in(config('mail_options.phases', []))],
             'sender_name'    => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'sender_company' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'tone'           => 'required|in:polite,casual',
+            'tone'           => ['required', 'string', Rule::in(array_keys(config('mail_options.tones', [])))],
         ];
     }
 }

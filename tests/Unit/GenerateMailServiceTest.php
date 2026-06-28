@@ -21,15 +21,17 @@ class GenerateMailServiceTest extends TestCase
     }
 
     // テストで共通して使う入力データ
+    // dot記法+デフォルト値でconfig未定義・空配列時のTypeError/undefined offsetを防ぐ
     private function validData(): array
     {
         return [
             'company_name'   => 'テスト株式会社',
-            'visited_page'   => '料金ページ',
-            'phase'          => '比較検討中',
+            'visited_page'   => config('mail_options.visited_pages.0', '料金ページ'),
+            'phase'          => config('mail_options.phases.0', '認知（初回訪問）'),
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => 'polite',
+            // politeが存在すればそれを優先しconfigの並び順に依存しないようにする
+            'tone'           => array_key_exists('polite', config('mail_options.tones', [])) ? 'polite' : (array_key_first(config('mail_options.tones', [])) ?? 'polite'),
         ];
     }
 
@@ -134,8 +136,62 @@ class GenerateMailServiceTest extends TestCase
         (new GenerateMailService())->generate($data);
 
         Http::assertSent(function ($request) {
-            // プロンプトにカジュアルの日本語表現が含まれていること
-            return str_contains($request->data()['messages'][0]['content'], 'カジュアル（親しみやすい）');
+            // プロンプトにcasualの日本語ラベルが含まれること
+            // デフォルトを実際のラベル値にすることでconfig未定義時も空文字にならず検証が常に有効になる
+            $label = (string) config('mail_options.tones.casual', 'カジュアル（親しみやすい）');
+            return str_contains($request->data()['messages'][0]['content'], $label);
+        });
+    }
+
+    // toneに未知のキーを渡したとき、任意文字列がプロンプトに混入せずpoliteラベルへフォールバックすること
+    // politeが存在しない場合のみ先頭ラベルへフォールバックするため期待値はpoliteラベルを明示参照する
+    public function test_不正なtoneキーのときpoliteラベルがプロンプトに使われること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $data         = $this->validData();
+        $data['tone'] = 'invalid_tone_key';
+
+        (new GenerateMailService())->generate($data);
+
+        Http::assertSent(function ($request) {
+            $content = $request->data()['messages'][0]['content'];
+            // サービス側のデフォルトはpoliteラベル優先なのでpoliteのラベルを明示参照する
+            $expectedLabel = (string) config('mail_options.tones.polite', '丁寧（ビジネスフォーマル）');
+            // 未知キー自体がプロンプトに含まれないこと
+            $this->assertStringNotContainsString('invalid_tone_key', $content);
+            // politeラベルがフォールバックとしてプロンプトに含まれること
+            return str_contains($content, $expectedLabel);
+        });
+    }
+
+    // toneに配列を渡したときTypeErrorにならずpoliteラベルへフォールバックすること
+    public function test_toneに配列を渡したときTypeErrorにならずpoliteラベルが使われること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $data         = $this->validData();
+        $data['tone'] = ['配列型の混入'];
+
+        // 配列が渡ってもIllegal offset typeにならずpoliteラベルへフォールバックすること
+        (new GenerateMailService())->generate($data);
+
+        Http::assertSent(function ($request) {
+            $content       = $request->data()['messages'][0]['content'];
+            $expectedLabel = (string) config('mail_options.tones.polite', '丁寧（ビジネスフォーマル）');
+            return str_contains($content, $expectedLabel);
         });
     }
 
