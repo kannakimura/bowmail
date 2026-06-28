@@ -19,15 +19,16 @@ class MailGeneratorTest extends TestCase
     }
 
     // テストで共通して使う正常な入力データ
+    // visited_page・phase・toneはconfig/mail_options.phpの先頭要素を使い選択肢との同期を保つ
     private function validPayload(): array
     {
         return [
             'company_name'   => 'テスト株式会社',
-            'visited_page'   => '料金ページ',
-            'phase'          => '比較検討中',
+            'visited_page'   => config('mail_options.visited_pages')[0],
+            'phase'          => config('mail_options.phases')[0],
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => 'polite',
+            'tone'           => array_key_first(config('mail_options.tones')),
         ];
     }
 
