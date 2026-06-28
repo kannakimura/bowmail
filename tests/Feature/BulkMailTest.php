@@ -85,12 +85,13 @@ class BulkMailTest extends TestCase
         $response->assertStatus(429);
     }
 
-    // アップロード画面にインラインスタイルが残っていないこと
+    // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
     public function test_アップロード画面にインラインスタイルが残っていないこと(): void
     {
-        $content = file_get_contents(resource_path('views/bulk.blade.php'));
+        $html = $this->get('/bulk')->content();
 
-        $this->assertStringNotContainsString('style=', $content);
+        // style="..."形式のインライン指定がレンダリング結果に含まれないこと
+        $this->assertDoesNotMatchRegularExpression('/<[^>]+style="[^"]*"[^>]*>/', $html);
     }
 
     // 必須フィールドにrequired属性が付いていること
