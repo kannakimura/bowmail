@@ -54,8 +54,9 @@
                     <select id="tone" name="tone" required>
                         @php
                             // configの取得とデフォルトキー算出をループ外で1回だけ行いTypeErrorを防ぐ
+                            // politeが存在すればそれをデフォルトにしconfigの並び順に依存しないようにする
                             $tones       = config('mail_options.tones', []);
-                            $defaultTone = array_key_first($tones) ?? '';
+                            $defaultTone = isset($tones['polite']) ? 'polite' : (array_key_first($tones) ?? '');
                         @endphp
                         @foreach($tones as $value => $label)
                             <option value="{{ $value }}" {{ old('tone', $defaultTone) === $value ? 'selected' : '' }}>{{ $label }}</option>

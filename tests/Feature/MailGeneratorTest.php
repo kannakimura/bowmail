@@ -28,7 +28,8 @@ class MailGeneratorTest extends TestCase
             'phase'          => config('mail_options.phases.0', '認知（初回訪問）'),
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => array_key_first(config('mail_options.tones', [])) ?? 'polite',
+            // politeが存在すればそれを優先しconfigの並び順に依存しないようにする
+            'tone'           => array_key_exists('polite', config('mail_options.tones', [])) ? 'polite' : (array_key_first(config('mail_options.tones', [])) ?? 'polite'),
         ];
     }
 

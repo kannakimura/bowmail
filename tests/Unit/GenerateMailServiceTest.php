@@ -30,7 +30,8 @@ class GenerateMailServiceTest extends TestCase
             'phase'          => config('mail_options.phases.0', '認知（初回訪問）'),
             'sender_name'    => '田中 太郎',
             'sender_company' => 'クラウドサーカス株式会社',
-            'tone'           => array_key_first(config('mail_options.tones', [])) ?? 'polite',
+            // politeが存在すればそれを優先しconfigの並び順に依存しないようにする
+            'tone'           => array_key_exists('polite', config('mail_options.tones', [])) ? 'polite' : (array_key_first(config('mail_options.tones', [])) ?? 'polite'),
         ];
     }
 
@@ -159,13 +160,13 @@ class GenerateMailServiceTest extends TestCase
         (new GenerateMailService())->generate($data);
 
         Http::assertSent(function ($request) {
-            $content      = $request->data()['messages'][0]['content'];
-            $tones        = config('mail_options.tones', []);
-            $defaultLabel = reset($tones) ?: '丁寧（ビジネスフォーマル）';
+            $content = $request->data()['messages'][0]['content'];
+            // サービス側のデフォルトはpoliteラベル優先なのでpoliteのラベルを明示参照する
+            $expectedLabel = (string) config('mail_options.tones.polite', '丁寧（ビジネスフォーマル）');
             // 未知キー自体がプロンプトに含まれないこと
             $this->assertStringNotContainsString('invalid_tone_key', $content);
-            // configの先頭ラベルがプロンプトに含まれること
-            return str_contains($content, $defaultLabel);
+            // politeラベルがフォールバックとしてプロンプトに含まれること
+            return str_contains($content, $expectedLabel);
         });
     }
 

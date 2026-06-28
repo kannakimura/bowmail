@@ -51,10 +51,11 @@ class GenerateMailService
     private function buildPrompt(array $data): string
     {
         // toneキーを一度取り出してUndefined indexを防ぐ
-        // 未知のキーやconfig未定義時は任意文字列がプロンプトに混入しないようconfigの先頭ラベルへフォールバックする
+        // 未知キー時は polite ラベルを優先し、polite が存在しない場合のみ先頭ラベルへフォールバックする
+        // configの並び順に依存しないよう polite を明示的に参照する
         $toneKey      = $data['tone'] ?? '';
         $tones        = config('mail_options.tones', []);
-        $defaultLabel = reset($tones) ?: '';
+        $defaultLabel = $tones['polite'] ?? (reset($tones) ?: '');
         $tone         = $tones[$toneKey] ?? $defaultLabel;
 
         // 会社名が入力されている場合とない場合でプロンプトの文言を分ける

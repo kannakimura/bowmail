@@ -34,7 +34,8 @@
                     $visitedPages = config('mail_options.visited_pages', []);
                     $phases       = config('mail_options.phases', []);
                     $tones        = config('mail_options.tones', []);
-                    $defaultTone  = array_key_first($tones) ?? '';
+                    // politeが存在すればそれをデフォルトにしconfigの並び順に依存しないようにする
+                    $defaultTone  = isset($tones['polite']) ? 'polite' : (array_key_first($tones) ?? '');
                 @endphp
 
                 <div class="form-group">
