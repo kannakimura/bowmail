@@ -84,6 +84,18 @@ class BulkMailTest extends TestCase
         $response->assertSessionHasErrors(['file']);
     }
 
+    // バリデーションエラー時にbulk画面へリダイレクトされエラーが表示されること
+    public function test_バリデーションエラー時にビューにエラーメッセージが表示されること(): void
+    {
+        // refererをbulkに設定してback()が正しく/bulkへ戻ることを保証する
+        $response = $this->from(route('bulk'))
+            ->followingRedirects()
+            ->post(route('bulk.upload'));
+
+        $response->assertStatus(200);
+        $response->assertSee('error-box', false);
+    }
+
     // xlsx以外のファイルをアップロードするとバリデーションエラーになること
     public function test_xlsx以外のファイルをアップロードするとエラーになること(): void
     {
