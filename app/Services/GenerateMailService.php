@@ -50,7 +50,8 @@ class GenerateMailService
     // 入力データからClaude APIへ送るプロンプトを組み立てる
     private function buildPrompt(array $data): string
     {
-        // toneキーを一度取り出してUndefined indexを防ぎ、config未定義時も空文字でフォールバックする
+        // toneキーを一度取り出してUndefined indexを防ぐ
+        // config未定義またはキーが存在しない場合はtoneキー自体（例: "polite"）をそのままフォールバックする
         $toneKey = $data['tone'] ?? '';
         $tone    = config('mail_options.tones', [])[$toneKey] ?? $toneKey;
 
