@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Imports\LeadImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Tests\TestCase;
 
 // LeadImportクラスのユニットテスト
@@ -82,5 +83,40 @@ class LeadImportTest extends TestCase
         $import = new LeadImport();
 
         $this->assertCount(0, $import->getRows());
+    }
+
+    // import完了後にHeadingRowFormatterがconfig設定値に戻っていること（通常系）
+    public function test_import完了後にHeadingRowFormatterがconfig設定値に戻ること(): void
+    {
+        $expected = config('excel.imports.heading_row.formatter', 'slug');
+
+        $import = new LeadImport();
+        Excel::import($import, $this->validFile);
+
+        // collection()末尾でformatterが元の値に戻されていること
+        // HeadingRowFormatterの内部状態をリフレクションで検証する
+        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
+        $property   = $reflection->getProperty('formatter');
+        $property->setAccessible(true);
+        $actual = $property->getValue(null);
+
+        $this->assertSame($expected, $actual);
+    }
+
+    // __destruct()でHeadingRowFormatterがconfig設定値に戻ること（例外系の保険）
+    public function test_destruct後にHeadingRowFormatterがconfig設定値に戻ること(): void
+    {
+        $expected = config('excel.imports.heading_row.formatter', 'slug');
+
+        // インスタンスを生成してすぐ破棄することで__destructを呼ぶ
+        $import = new LeadImport();
+        unset($import);
+
+        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
+        $property   = $reflection->getProperty('formatter');
+        $property->setAccessible(true);
+        $actual = $property->getValue(null);
+
+        $this->assertSame($expected, $actual);
     }
 }
