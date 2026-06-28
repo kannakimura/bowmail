@@ -29,8 +29,8 @@ class BulkMailController extends Controller
                 $request->file('file')->getPathname()
             );
         } catch (Throwable $e) {
-            // ファイル破損・xlsx偽装等のパースエラーはログに記録してユーザーに安全なメッセージを返す
-            Log::error('Excelパース失敗', ['message' => $e->getMessage()]);
+            // ファイル破損・xlsx偽装等のパースエラーはスタックトレース付きでログに記録してユーザーに安全なメッセージを返す
+            Log::error('Excelパース失敗', ['exception' => $e]);
 
             return back()
                 ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
