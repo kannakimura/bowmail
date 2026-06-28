@@ -3,24 +3,52 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkUploadRequest;
+use App\Services\BulkImportService;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 // 一括メール生成機能のコントローラー
-// Excel アップロード → 一括生成 → Excel ダウンロードの流れを担当する
+// Excel アップロード → プレビュー → 一括生成 → Excel ダウンロードの流れを担当する
 class BulkMailController extends Controller
 {
+    public function __construct(private readonly BulkImportService $bulkImportService) {}
+
     // アップロードフォーム画面を表示する
     public function index()
     {
         return view('bulk');
     }
 
-    // Excelアップロードを受け取る（Phase 1-3以降でパース処理を実装予定）
-    // バリデーションはBulkUploadRequestに委譲してControllerを薄く保つ
-    // バリデーション済みの送信者情報・トーンのみをflashして想定外キーの混入を防ぐ
+    // ExcelをBulkImportService経由でパースしてフラッシュセッションでプレビュー画面へリダイレクトする
+    // redirect()->with()でflash保存することでPRGパターンを正しく実現し直アクセス時に過去データが残らない
+    // パース失敗時はアップロード画面へ戻してエラーを表示する
     public function upload(BulkUploadRequest $request)
     {
-        $input = $request->safe()->only(['sender_name', 'sender_company', 'tone']);
+        try {
+            $rows = $this->bulkImportService->parse(
+                $request->file('file')->getPathname()
+            );
+        } catch (Throwable $e) {
+            // ファイル破損・xlsx偽装等のパースエラーはスタックトレース付きでログに記録してユーザーに安全なメッセージを返す
+            Log::error('Excelパース失敗', ['exception' => $e]);
 
-        return redirect()->route('bulk')->withInput($input);
+            return back()
+                ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
+                ->withErrors(['file' => 'ファイルの読み込みに失敗しました。破損していないxlsxファイルをアップロードしてください。']);
+        }
+
+        return redirect()->route('bulk.preview')->with([
+            'bulk_input' => $request->safe()->only(['sender_name', 'sender_company', 'tone']),
+            'bulk_rows'  => $rows->map(fn ($row) => $row->toArray())->toArray(),
+        ]);
+    }
+
+    // セッションからパース済みデータを受け取りプレビュー画面を表示する
+    public function preview()
+    {
+        $input = session('bulk_input', []);
+        $rows  = session('bulk_rows', []);
+
+        return view('bulk-preview', compact('input', 'rows'));
     }
 }
