@@ -127,3 +127,44 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 /* 再生成ボタン（グレー） */
 .btn--gray { background: #6b7280; }
 .btn--gray:hover { background: #4b5563; }
+
+/* プレビューテーブル */
+.preview-table-wrap { overflow-x: auto; }
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.preview-table th {
+    background: #f3f4f6;
+    color: #555;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+.preview-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    word-break: break-all;
+}
+.preview-table tr:last-child td { border-bottom: none; }
+.preview-table tr:hover td { background: #f9fafb; }
+
+/* プレビューのメタ情報バッジ */
+.preview-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #555;
+}
+.preview-meta span { background: #eff6ff; color: #1a56db; padding: 4px 10px; border-radius: 4px; }
+
+/* プレビュー行数バッジ */
+.row-count { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+
+/* ボタンエリア横並び */
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }

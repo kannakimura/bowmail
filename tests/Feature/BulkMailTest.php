@@ -264,6 +264,111 @@ class BulkMailTest extends TestCase
         $response->assertStatus(429);
     }
 
+    // GET /bulk/preview がセッションデータありで送信者情報を表示すること
+    public function test_プレビュー画面が送信者情報を表示すること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => [
+                'sender_name'    => '田中 太郎',
+                'sender_company' => 'クラウドサーカス株式会社',
+                'tone'           => 'polite',
+            ],
+            'bulk_rows' => [
+                [
+                    'company_name' => 'テスト株式会社',
+                    'email'        => 'test@example.com',
+                    'visited_page' => '料金ページ',
+                    'phase'        => '比較検討中',
+                ],
+            ],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('田中 太郎');
+        $response->assertSee('クラウドサーカス株式会社');
+        // toneはconfigのラベル（丁寧（ビジネスフォーマル））が表示されること
+        $response->assertSee('丁寧（ビジネスフォーマル）');
+    }
+
+    // GET /bulk/preview がセッションデータありでリード行をテーブル表示すること
+    public function test_プレビュー画面がリード行をテーブル表示すること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => [
+                'sender_name'    => '田中 太郎',
+                'sender_company' => 'クラウドサーカス株式会社',
+                'tone'           => 'polite',
+            ],
+            'bulk_rows' => [
+                [
+                    'company_name' => 'テスト株式会社',
+                    'email'        => 'test@example.com',
+                    'visited_page' => '料金ページ',
+                    'phase'        => '比較検討中',
+                ],
+            ],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('テスト株式会社');
+        $response->assertSee('test@example.com');
+        $response->assertSee('料金ページ');
+        $response->assertSee('比較検討中');
+    }
+
+    // GET /bulk/preview でセッションなし（直アクセス）の場合に空状態メッセージを表示すること
+    public function test_プレビュー画面がセッションなしで空状態メッセージを表示すること(): void
+    {
+        $response = $this->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('表示するデータがありません');
+    }
+
+    // GET /bulk/preview がconfig定義の列ヘッダーをテーブルに表示すること
+    public function test_プレビュー画面がconfig定義の列ヘッダーを表示すること(): void
+    {
+        $columns = config('bulk_import.columns', []);
+        // bulk_import.columnsが空だとforeachが回らず検証が無効になるため事前にガードする
+        $this->assertNotEmpty($columns, 'bulk_import.columnsが空のためヘッダー検証が無効です');
+
+        $response = $this->withSession([
+            'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
+            'bulk_rows'  => [array_fill_keys(array_keys($columns), '')],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        // assertSee($label)だと送信者情報バッジ等に同名文字列があっても通るため
+        // <th>タグを含めて検証しテーブルヘッダーとして表示されていることを保証する
+        foreach ($columns as $label) {
+            $this->assertMatchesRegularExpression(
+                '/<th[^>]*>\s*' . preg_quote($label, '/') . '\s*<\/th>/',
+                $response->content(),
+                "テーブルヘッダー <th>{$label}</th> が見つかりません"
+            );
+        }
+    }
+
+    // GET /bulk/preview に「やり直す」ボタンがあり /bulk へ戻れること
+    // hrefとテキストが同一<a>タグ内に存在することを正規表現で検証し、
+    // 上部ナビのリンクだけにroute('bulk')が残る場合でもテストが通らないことを保証する
+    public function test_プレビュー画面にやり直すボタンが含まれること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
+            'bulk_rows'  => [['company_name' => 'A', 'email' => 'a@a.com', 'visited_page' => 'x', 'phase' => 'y']],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        // href属性とテキスト「やり直す」が同一<a>タグ内に存在することを検証する
+        $bulkUrl = route('bulk');
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="' . preg_quote($bulkUrl, '/') . '"[^>]*>\s*やり直す\s*<\/a>/',
+            $response->content(),
+            '「やり直す」ボタンのhrefが ' . $bulkUrl . ' になっていません'
+        );
+    }
+
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
     public function test_アップロード画面にインラインスタイルが残っていないこと(): void
     {
