@@ -162,8 +162,8 @@ class BulkMailTest extends TestCase
     {
         $html = $this->get('/bulk')->content();
 
-        // style="..."形式のインライン指定がレンダリング結果に含まれないこと
-        $this->assertDoesNotMatchRegularExpression('/<[^>]+style="[^"]*"[^>]*>/', $html);
+        // style=".."またはstyle='..'のインライン指定がクォート種別によらず検出されること
+        $this->assertDoesNotMatchRegularExpression('/<[^>]+style=(?:"[^"]*"|\'[^\']*\')[^>]*>/', $html);
     }
 
     // 必須フィールドにrequired属性とaccept属性が付いていること
@@ -172,15 +172,15 @@ class BulkMailTest extends TestCase
     {
         $content = $this->get('/bulk')->content();
 
-        // lookaheadで属性順非依存・\srequired(?=[\s\/>])でハイフン付き属性への誤マッチを防ぐ
+        // lookaheadで属性順非依存・required(?:="[^"]*")?で値付き形式(required="required"等)も許容
         $this->assertMatchesRegularExpression(
-            '/<input(?=[^>]*\sname="file")(?=[^>]*\saccept="\.xlsx")(?=[^>]*\srequired(?=[\s\/>]))[^>]*>/',
+            '/<input(?=[^>]*\sname="file")(?=[^>]*\saccept="\.xlsx")(?=[^>]*\srequired(?:="[^"]*")?(?=[\s\/>]))[^>]*>/',
             $content,
             'ファイル入力にaccept=".xlsx"とrequiredが付いていません'
         );
         foreach (['sender_name', 'sender_company', 'tone'] as $field) {
             $this->assertMatchesRegularExpression(
-                '/<(?:input|select|textarea)(?=[^>]*\sname="' . $field . '")(?=[^>]*\srequired(?=[\s\/>]))[^>]*>/',
+                '/<(?:input|select|textarea)(?=[^>]*\sname="' . $field . '")(?=[^>]*\srequired(?:="[^"]*")?(?=[\s\/>]))[^>]*>/',
                 $content,
                 "{$field} フィールドにrequired属性が付いていません"
             );
