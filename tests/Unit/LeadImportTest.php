@@ -18,22 +18,24 @@ class LeadImportTest extends TestCase
         $this->validFile = base_path('tests/fixtures/leads_valid.xlsx');
     }
 
-    // COLUMNS定数に期待する列キーが定義されていること
-    public function test_COLUMNS定数に期待する列キーが定義されていること(): void
+    // config/bulk_import.phpに期待する列キーが定義されていること
+    public function test_bulk_import設定に期待する列キーが定義されていること(): void
     {
-        $this->assertArrayHasKey('company_name', LeadImport::COLUMNS);
-        $this->assertArrayHasKey('email', LeadImport::COLUMNS);
-        $this->assertArrayHasKey('visited_page', LeadImport::COLUMNS);
-        $this->assertArrayHasKey('phase', LeadImport::COLUMNS);
+        $columns = config('bulk_import.columns', []);
+
+        $this->assertArrayHasKey('company_name', $columns);
+        $this->assertArrayHasKey('email', $columns);
+        $this->assertArrayHasKey('visited_page', $columns);
+        $this->assertArrayHasKey('phase', $columns);
     }
 
-    // COLUMNS定数の値が日本語ヘッダー名であること
-    public function test_COLUMNS定数の値が日本語ヘッダー名であること(): void
+    // config/bulk_import.phpの値が日本語ヘッダー名であること
+    public function test_bulk_import設定の値が日本語ヘッダー名であること(): void
     {
-        $this->assertSame('会社名', LeadImport::COLUMNS['company_name']);
-        $this->assertSame('メールアドレス', LeadImport::COLUMNS['email']);
-        $this->assertSame('訪問ページ', LeadImport::COLUMNS['visited_page']);
-        $this->assertSame('フェーズ', LeadImport::COLUMNS['phase']);
+        $this->assertSame('会社名', config('bulk_import.columns.company_name'));
+        $this->assertSame('メールアドレス', config('bulk_import.columns.email'));
+        $this->assertSame('訪問ページ', config('bulk_import.columns.visited_page'));
+        $this->assertSame('フェーズ', config('bulk_import.columns.phase'));
     }
 
     // 有効なExcelファイルを読み込むとデータ行数が正しいこと
@@ -46,15 +48,16 @@ class LeadImportTest extends TestCase
         $this->assertCount(2, $import->getRows());
     }
 
-    // 読み込んだ行がCOLUMNS定数の英語キーにリマップされていること
+    // 読み込んだ行がconfig定義の英語キーにリマップされていること
     public function test_読み込んだ行が英語キーにリマップされていること(): void
     {
         $import = new LeadImport();
         Excel::import($import, $this->validFile);
 
         $firstRow = $import->getRows()->first();
+        $columns  = config('bulk_import.columns', []);
 
-        foreach (array_keys(LeadImport::COLUMNS) as $key) {
+        foreach (array_keys($columns) as $key) {
             $this->assertArrayHasKey($key, $firstRow->toArray(), "{$key}キーがありません");
         }
     }
