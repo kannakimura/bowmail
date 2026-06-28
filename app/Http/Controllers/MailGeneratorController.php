@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -62,20 +63,25 @@ class MailGeneratorController extends Controller
 - 署名は含めない
 PROMPT;
 
-        // Claude APIを呼び出す（APIキーはservices.phpとenvで管理）
-        $response = Http::withHeaders([
-            'x-api-key'         => config('services.anthropic.key'),
-            'anthropic-version' => '2023-06-01',
-            'content-type'      => 'application/json',
-        ])->post('https://api.anthropic.com/v1/messages', [
-            'model'      => 'claude-haiku-4-5-20251001',
-            'max_tokens' => 1024,
-            'messages'   => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
-        ]);
+        // Claude APIを呼び出す（タイムアウト・接続エラーはConnectionExceptionで捕捉する）
+        try {
+            $response = Http::withHeaders([
+                'x-api-key'         => config('services.anthropic.key'),
+                'anthropic-version' => '2023-06-01',
+                'content-type'      => 'application/json',
+            ])->post('https://api.anthropic.com/v1/messages', [
+                'model'      => 'claude-haiku-4-5-20251001',
+                'max_tokens' => 1024,
+                'messages'   => [
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+            ]);
+        } catch (ConnectionException $e) {
+            // タイムアウトや接続失敗の場合は500にせずフォームに戻す
+            return back()->withInput()->withErrors(['api' => 'AIサーバーに接続できませんでした。しばらくしてから再度お試しください。']);
+        }
 
-        // API呼び出しが失敗した場合はエラーメッセージを返す
+        // HTTPステータスが4xx/5xxの場合はエラーメッセージを返す
         if ($response->failed()) {
             return back()->withInput()->withErrors(['api' => 'メール生成に失敗しました。しばらくしてから再度お試しください。']);
         }
