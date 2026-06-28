@@ -286,6 +286,22 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['sender_company']);
     }
 
+    // 必須フィールドにrequired属性が付いていること（サーバ側バリデーションとUIの一致確認）
+    // lookaheadで属性順に依存せず同一タグ内にname属性とrequiredが存在することを検証する
+    public function test_必須フィールドにrequired属性が付いていること(): void
+    {
+        $html = $this->get('/')->content();
+
+        // lookaheadで属性順非依存・required(?:="[^"]*")?で値付き形式(required="required"等)も許容
+        foreach (['visited_page', 'phase', 'tone', 'sender_name', 'sender_company'] as $field) {
+            $this->assertMatchesRegularExpression(
+                '/<(?:input|select|textarea)(?=[^>]*\sname="' . $field . '")(?=[^>]*\srequired(?:="[^"]*")?(?=[\s\/>]))[^>]*>/',
+                $html,
+                "{$field} フィールドにrequired属性が付いていません"
+            );
+        }
+    }
+
     // トップページが正常に表示されること
     public function test_トップページが表示されること(): void
     {
