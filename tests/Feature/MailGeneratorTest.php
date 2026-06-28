@@ -287,15 +287,18 @@ class MailGeneratorTest extends TestCase
     }
 
     // 必須フィールドにrequired属性が付いていること（サーバ側バリデーションとUIの一致確認）
+    // lookaheadで属性順に依存せず同一タグ内にname属性とrequiredが存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
     {
         $html = $this->get('/')->content();
 
-        $this->assertMatchesRegularExpression('/name="visited_page"[^>]*required/', $html);
-        $this->assertMatchesRegularExpression('/name="phase"[^>]*required/', $html);
-        $this->assertMatchesRegularExpression('/name="tone"[^>]*required/', $html);
-        $this->assertMatchesRegularExpression('/name="sender_name"[^>]*required/', $html);
-        $this->assertMatchesRegularExpression('/name="sender_company"[^>]*required/', $html);
+        foreach (['visited_page', 'phase', 'tone', 'sender_name', 'sender_company'] as $field) {
+            $this->assertMatchesRegularExpression(
+                '/<[^>]*(?=.*name="' . $field . '")(?=.*required)[^>]*>/',
+                $html,
+                "{$field} フィールドにrequired属性が付いていません"
+            );
+        }
     }
 
     // トップページが正常に表示されること
