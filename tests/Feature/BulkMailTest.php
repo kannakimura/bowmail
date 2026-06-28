@@ -50,10 +50,12 @@ class BulkMailTest extends TestCase
         $response->assertSee(route('bulk.upload'), false);
     }
 
-    // POST /bulk/uploadが405ではなくリダイレクトを返すこと
+    // 有効なxlsxファイルをPOSTするとアップロード画面へリダイレクトされること（405にならないこと）
     public function test_POST_bulk_uploadが405にならないこと(): void
     {
-        $response = $this->post(route('bulk.upload'));
+        $file = \Illuminate\Http\UploadedFile::fake()->create('list.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $response = $this->post(route('bulk.upload'), ['file' => $file]);
 
         // Phase 1-3実装前はアップロード画面へのリダイレクトが返ること
         $response->assertRedirect(route('bulk'));
@@ -72,6 +74,14 @@ class BulkMailTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('田中 太郎');
         $response->assertSee('クラウドサーカス株式会社');
+    }
+
+    // ファイルを添付せずにPOSTするとバリデーションエラーになること
+    public function test_ファイル未添付でPOSTするとバリデーションエラーになること(): void
+    {
+        $response = $this->post(route('bulk.upload'));
+
+        $response->assertSessionHasErrors(['file']);
     }
 
     // xlsx以外のファイルをアップロードするとバリデーションエラーになること
