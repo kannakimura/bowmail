@@ -21,18 +21,23 @@ class LeadImport implements ToCollection, WithHeadingRow
         HeadingRowFormatter::default('none');
     }
 
+    // インスタンス破棄時にグローバル設定をデフォルトに戻して他のImportへの影響を閉じる
+    public function __destruct()
+    {
+        HeadingRowFormatter::default('slug');
+    }
+
     // WithHeadingRowがヘッダー行をスキップしコレクションとして渡す
-    // 日本語ヘッダーキーをconfig/bulk_import.phpの英語キーにリマップして格納する
+    // config定義の期待列のみを抽出して英語キーにリマップし想定外列の混入を防ぐ
     public function collection(Collection $rows): void
     {
         $columns = config('bulk_import.columns', []);
-        $flip    = array_flip($columns);
 
-        $this->rows = $rows->map(function ($row) use ($flip) {
+        $this->rows = $rows->map(function ($row) use ($columns) {
             $mapped = [];
-            foreach ($row as $header => $value) {
-                $key          = $flip[$header] ?? $header;
-                $mapped[$key] = $value;
+            // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
+            foreach ($columns as $englishKey => $japaneseHeader) {
+                $mapped[$englishKey] = $row[$japaneseHeader] ?? null;
             }
             return collect($mapped);
         });
