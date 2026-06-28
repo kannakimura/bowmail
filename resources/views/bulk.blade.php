@@ -4,76 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BowMail - 一括メール生成</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; color: #333; }
-
-        .header {
-            background: #1a56db;
-            color: #fff;
-            padding: 16px 32px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.05em; }
-        .header span { font-size: 13px; opacity: 0.75; }
-
-        .container { max-width: 860px; margin: 40px auto; padding: 0 20px; }
-
-        .card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            padding: 32px;
-            margin-bottom: 24px;
-        }
-        .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #1a56db; border-left: 3px solid #1a56db; padding-left: 10px; }
-
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 13px; font-weight: 500; color: #555; }
-        input[type="text"], select, input[type="file"] {
-            padding: 9px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        input[type="text"]:focus, select:focus {
-            outline: none;
-            border-color: #1a56db;
-            box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
-        }
-        input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
-
-        .btn {
-            display: inline-block;
-            padding: 11px 28px;
-            background: #1a56db;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn:hover { background: #1648c0; }
-
-        .hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
-
-        .nav-link {
-            display: inline-block;
-            margin-bottom: 24px;
-            font-size: 13px;
-            color: #1a56db;
-            text-decoration: none;
-        }
-        .nav-link:hover { text-decoration: underline; }
-
-        .footer { text-align: center; font-size: 12px; color: #9ca3af; padding: 20px 0 40px; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body>
 
