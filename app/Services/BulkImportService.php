@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 class BulkImportService
 {
     // Excelファイルをパースして各行がCollectionの要素であるCollectionを返す
-    // 各行のCollectionは ['company_name', 'email', 'visited_page', 'phase'] をキーに持つ
+    // 各行のキーはconfig/bulk_import.phpのcolumns定義に従って決まる
     public function parse(string $filePath): Collection
     {
         $import = new LeadImport();
