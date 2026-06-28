@@ -1,0 +1,144 @@
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+// /generate エンドポイントのFeatureテスト
+class MailGeneratorTest extends TestCase
+{
+    // テストで共通して使う正常な入力データ
+    private function validPayload(): array
+    {
+        return [
+            'company_name'   => 'テスト株式会社',
+            'visited_page'   => '料金ページ',
+            'phase'          => '比較検討中',
+            'sender_name'    => '田中 太郎',
+            'sender_company' => 'クラウドサーカス株式会社',
+            'tone'           => 'polite',
+        ];
+    }
+
+    // Anthropic APIが正常に返した場合に件名・本文が表示されること
+    public function test_メール生成が成功すること(): void
+    {
+        // Claude APIのレスポンスをフェイクする
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertStatus(200);
+        $response->assertSee('テスト件名');
+        $response->assertSee('テスト本文です。');
+    }
+
+    // 必須項目が未入力の場合にバリデーションエラーが返ること
+    public function test_必須項目が空のときバリデーションエラーになること(): void
+    {
+        $response = $this->post('/generate', []);
+
+        $response->assertSessionHasErrors(['visited_page', 'phase', 'sender_name', 'sender_company', 'tone']);
+    }
+
+    // visited_pageにホワイトリスト外の値を送った場合にエラーになること
+    public function test_visited_pageに不正な値を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['visited_page'] = '不正なページ名';
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['visited_page']);
+    }
+
+    // phaseにホワイトリスト外の値を送った場合にエラーになること
+    public function test_phaseに不正な値を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['phase'] = '不正なフェーズ';
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['phase']);
+    }
+
+    // company_nameに配列を送った場合にバリデーションエラーになること
+    public function test_company_nameに配列を送るとバリデーションエラーになること(): void
+    {
+        $payload = $this->validPayload();
+        $payload['company_name'] = ['悪意のある配列'];
+
+        $response = $this->post('/generate', $payload);
+
+        $response->assertSessionHasErrors(['company_name']);
+    }
+
+    // Anthropic APIが5xx系エラーを返した場合にエラーメッセージが表示されること
+    public function test_APIが失敗したときエラーメッセージが表示されること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([], 500),
+        ]);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertSessionHasErrors(['api']);
+    }
+
+    // タイムアウトや接続失敗時にエラーメッセージが表示されること
+    public function test_API接続失敗のときエラーメッセージが表示されること(): void
+    {
+        Http::fake(function () {
+            throw new ConnectionException('接続できませんでした');
+        });
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertSessionHasErrors(['api']);
+    }
+
+    // APIキーが未設定の場合にエラーメッセージが表示されること
+    public function test_APIキー未設定のときエラーメッセージが表示されること(): void
+    {
+        // configを一時的に空にする
+        config(['services.anthropic.key' => '']);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertSessionHasErrors(['api']);
+    }
+
+    // レスポンスのcontent.0.textがnullの場合にエラーメッセージが表示されること
+    public function test_APIレスポンスが不正な形式のときエラーメッセージが表示されること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => null],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        $response->assertSessionHasErrors(['api']);
+    }
+
+    // トップページが正常に表示されること
+    public function test_トップページが表示されること(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('BowMail');
+    }
+}
