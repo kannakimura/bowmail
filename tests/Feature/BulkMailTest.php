@@ -74,6 +74,17 @@ class BulkMailTest extends TestCase
         $response->assertSee('クラウドサーカス株式会社');
     }
 
+    // POST /bulk/uploadに6回連続リクエストすると429(Too Many Requests)になること
+    public function test_POST_bulk_uploadに連続リクエストするとスロットリングされること(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->post(route('bulk.upload'));
+        }
+
+        $response = $this->post(route('bulk.upload'));
+        $response->assertStatus(429);
+    }
+
     // アップロード画面にインラインスタイルが残っていないこと
     public function test_アップロード画面にインラインスタイルが残っていないこと(): void
     {
