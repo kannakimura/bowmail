@@ -12,7 +12,8 @@ class BulkMailTest extends TestCase
 
     private function postWithUniqueIp(string $url, array $data = []): \Illuminate\Testing\TestResponse
     {
-        $ip = '127.0.1.' . (++self::$ipCounter);
+        // %253で0〜252に循環し+1で1〜253に収めることで第4オクテットが0/255を超えない有効なIPv4を保証する
+        $ip = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
 
         return $this->withServerVariables(['REMOTE_ADDR' => $ip])
             ->post($url, $data);
