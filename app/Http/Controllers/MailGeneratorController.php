@@ -27,10 +27,11 @@ class MailGeneratorController extends Controller
             return back()->withInput()->withErrors(['api' => $result['error']]);
         }
 
+        // inputにはvalidated()済みの$dataを渡す（_tokenなど未検証の値を含むall()は使わない）
         return view('mail-generator', [
             'subject' => $result['subject'],
             'body'    => $result['body'],
-            'input'   => $request->all(),
+            'input'   => $data,
         ]);
     }
 }

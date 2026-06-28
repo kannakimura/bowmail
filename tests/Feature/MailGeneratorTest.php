@@ -206,6 +206,26 @@ class MailGeneratorTest extends TestCase
         });
     }
 
+    // 成功時にビューへ渡すinputにCSRFトークン(_token)が含まれないこと
+    public function test_生成成功時のinputに_tokenが含まれないこと(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->post('/generate', $this->validPayload());
+
+        // レスポンスHTMLに_tokenの値が隠しフィールド以外で露出していないこと
+        // validated()を使うことで_tokenがView変数inputに混入しない
+        $response->assertStatus(200);
+        $response->assertViewHas('input');
+        $this->assertArrayNotHasKey('_token', $response->viewData('input'));
+    }
+
     // トップページが正常に表示されること
     public function test_トップページが表示されること(): void
     {
