@@ -95,7 +95,7 @@ class LeadImportTest extends TestCase
     // コンストラクタ生成直後はformatterをグローバルに変更しないこと
     public function test_コンストラクタ生成時点ではformatterを変更しないこと(): void
     {
-        $before = config('excel.imports.heading_row.formatter', 'slug');
+        $expected = config('excel.imports.heading_row.formatter', 'slug');
 
         new LeadImport();
 
@@ -104,8 +104,8 @@ class LeadImportTest extends TestCase
         $property->setAccessible(true);
         $actual = $property->getValue(null);
 
-        // コンストラクタではグローバル設定を変更しないのでimport前後で値が変わらないこと
-        $this->assertNotSame('none', $actual, 'コンストラクタでformatterが変更されています');
+        // コンストラクタではグローバル設定を変更しないためconfig設定値と一致すること
+        $this->assertSame($expected, $actual, 'コンストラクタでformatterが変更されています');
     }
 
     // import完了後にHeadingRowFormatterがconfig設定値に戻っていること（AfterImportイベント経由）
