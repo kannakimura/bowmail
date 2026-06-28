@@ -24,15 +24,16 @@ class ExcelServiceProviderTest extends TestCase
         $this->assertInstanceOf(Excel::class, ExcelFacade::getFacadeRoot());
     }
 
-    // config/excel.phpが読み込まれていること
+    // config/excel.phpが読み込まれトップレベルキーが存在すること
+    // 空配列でのフォールスルーを防ぐためexportsキーの存在まで確認する
     public function test_excel設定ファイルが読み込まれていること(): void
     {
-        $this->assertNotNull(config('excel'));
         $this->assertIsArray(config('excel'));
+        $this->assertArrayHasKey('exports', config('excel'));
     }
 
-    // デフォルトの一時保存ディスクが設定されていること
-    public function test_excelの一時ディスク設定が存在すること(): void
+    // 一時ファイルのローカルパスが設定されていること
+    public function test_excelの一時ファイルパス設定が存在すること(): void
     {
         $this->assertNotNull(config('excel.temporary_files.local_path'));
     }
