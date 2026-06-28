@@ -3,10 +3,11 @@
 namespace Tests\Unit;
 
 use App\Services\BulkImportService;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Tests\TestCase;
 
 // BulkImportServiceのユニットテスト
-// Excelファイルをパースして期待するデータ配列を返すことを検証する
+// Excelファイルをパースして各行がCollectionのCollectionを返すことを検証する
 class BulkImportServiceTest extends TestCase
 {
     private BulkImportService $service;
@@ -17,6 +18,13 @@ class BulkImportServiceTest extends TestCase
         parent::setUp();
         $this->service   = new BulkImportService();
         $this->validFile = base_path('tests/fixtures/leads_valid.xlsx');
+    }
+
+    // LeadImportがimport中にformatterを変更するためテスト失敗時の後続テストへの副作用を防ぐ
+    protected function tearDown(): void
+    {
+        HeadingRowFormatter::default(config('excel.imports.heading_row.formatter', 'slug'));
+        parent::tearDown();
     }
 
     // 有効なExcelファイルをパースするとCollectionが返ること
