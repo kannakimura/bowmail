@@ -1,0 +1,19 @@
+name: Request Copilot Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  request-copilot-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Copilotにレビューをリクエストする
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --add-reviewer "copilot"
