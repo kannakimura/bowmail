@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Http;
 class MailGeneratorController extends Controller
 {
     // 入力フォーム画面を表示する
+    // $inputを空配列で渡してビュー側の $input[...] ?? '' 参照で未定義エラーにならないようにする
     public function index()
     {
-        return view('mail-generator');
+        return view('mail-generator', ['input' => []]);
     }
 
     // フォームの入力値を受け取り、Claude APIでメールを生成して結果を返す
