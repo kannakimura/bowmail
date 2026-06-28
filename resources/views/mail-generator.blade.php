@@ -30,50 +30,50 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="visited_page">訪問したページ <span style="color:#e53e3e">*</span></label>
+                    <label for="visited_page">訪問したページ <span class="required-mark">*</span></label>
                     <select id="visited_page" name="visited_page">
                         <option value="">選択してください</option>
                         @foreach(['料金ページ', '導入事例ページ', '機能紹介ページ', '資料ダウンロードページ', 'お問い合わせページ（未送信）', 'トップページ'] as $page)
                             <option value="{{ $page }}" {{ old('visited_page', $input['visited_page'] ?? '') === $page ? 'selected' : '' }}>{{ $page }}</option>
                         @endforeach
                     </select>
-                    @error('visited_page')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
+                    @error('visited_page')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="phase">検討フェーズ <span style="color:#e53e3e">*</span></label>
+                    <label for="phase">検討フェーズ <span class="required-mark">*</span></label>
                     <select id="phase" name="phase">
                         <option value="">選択してください</option>
                         @foreach(['認知（初回訪問）', '比較検討中', '導入検討中', '失注後フォロー'] as $p)
                             <option value="{{ $p }}" {{ old('phase', $input['phase'] ?? '') === $p ? 'selected' : '' }}>{{ $p }}</option>
                         @endforeach
                     </select>
-                    @error('phase')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
+                    @error('phase')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="tone">メールのトーン <span style="color:#e53e3e">*</span></label>
+                    <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone">
                         <option value="polite" {{ old('tone', $input['tone'] ?? 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
                         <option value="casual" {{ old('tone', $input['tone'] ?? '') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
                     </select>
-                    @error('tone')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
+                    @error('tone')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="sender_name">送信者名 <span style="color:#e53e3e">*</span></label>
+                    <label for="sender_name">送信者名 <span class="required-mark">*</span></label>
                     <input type="text" id="sender_name" name="sender_name" placeholder="例：田中 太郎" value="{{ old('sender_name', $input['sender_name'] ?? '') }}">
-                    @error('sender_name')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
+                    @error('sender_name')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="sender_company">送信者の会社名 <span style="color:#e53e3e">*</span></label>
+                    <label for="sender_company">送信者の会社名 <span class="required-mark">*</span></label>
                     <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company', $input['sender_company'] ?? '') }}">
-                    @error('sender_company')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
+                    @error('sender_company')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
             </div>
 
-            <div style="margin-top: 24px;">
+            <div class="submit-area">
                 {{-- ローディング中はボタンを非活性にしてテキストを変える --}}
                 <button type="submit" id="submit-btn" class="btn">メールを生成する</button>
             </div>
@@ -95,9 +95,9 @@
             <button class="copy-btn" onclick="copyText('body-box', this)">コピー</button>
         </div>
         {{-- 再生成ボタン：requestSubmit()でsubmitイベントを発火してローディング表示も動かす --}}
-        <div style="margin-top: 20px;">
+        <div class="regenerate-area">
             {{-- requestSubmit()はsafari15.4未満等で未実装のためフォールバックを設ける --}}
-            <button class="btn" style="background:#6b7280;" onclick="resubmitForm(); return false;">もう一度生成する</button>
+            <button class="btn btn--gray" onclick="resubmitForm(); return false;">もう一度生成する</button>
         </div>
     </div>
     @endif
