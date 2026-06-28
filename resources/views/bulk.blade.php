@@ -52,9 +52,13 @@
                 <div class="form-group">
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone" required>
-                        @foreach(config('mail_options.tones', []) as $value => $label)
-                            {{-- デフォルトはconfigの先頭キーを使いハードコードを避ける --}}
-                            <option value="{{ $value }}" {{ old('tone', array_key_first(config('mail_options.tones', []))) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @php
+                            // configの取得とデフォルトキー算出をループ外で1回だけ行いTypeErrorを防ぐ
+                            $tones       = config('mail_options.tones', []);
+                            $defaultTone = array_key_first($tones) ?? '';
+                        @endphp
+                        @foreach($tones as $value => $label)
+                            <option value="{{ $value }}" {{ old('tone', $defaultTone) === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>

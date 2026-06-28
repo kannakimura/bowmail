@@ -29,11 +29,19 @@
                     <input type="text" id="company_name" name="company_name" placeholder="例：株式会社〇〇" value="{{ old('company_name', $input['company_name'] ?? '') }}">
                 </div>
 
+                @php
+                    // 各セレクトの選択肢をループ外で一度だけ取得しconfig未定義時のwarningを防ぐ
+                    $visitedPages = config('mail_options.visited_pages', []);
+                    $phases       = config('mail_options.phases', []);
+                    $tones        = config('mail_options.tones', []);
+                    $defaultTone  = array_key_first($tones) ?? '';
+                @endphp
+
                 <div class="form-group">
                     <label for="visited_page">訪問したページ <span class="required-mark">*</span></label>
                     <select id="visited_page" name="visited_page" required>
                         <option value="">選択してください</option>
-                        @foreach(config('mail_options.visited_pages') as $page)
+                        @foreach($visitedPages as $page)
                             <option value="{{ $page }}" {{ old('visited_page', $input['visited_page'] ?? '') === $page ? 'selected' : '' }}>{{ $page }}</option>
                         @endforeach
                     </select>
@@ -44,7 +52,7 @@
                     <label for="phase">検討フェーズ <span class="required-mark">*</span></label>
                     <select id="phase" name="phase" required>
                         <option value="">選択してください</option>
-                        @foreach(config('mail_options.phases') as $p)
+                        @foreach($phases as $p)
                             <option value="{{ $p }}" {{ old('phase', $input['phase'] ?? '') === $p ? 'selected' : '' }}>{{ $p }}</option>
                         @endforeach
                     </select>
@@ -54,11 +62,6 @@
                 <div class="form-group">
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone" required>
-                        @php
-                            // configの取得とデフォルトキー算出をループ外で1回だけ行いTypeErrorを防ぐ
-                            $tones       = config('mail_options.tones', []);
-                            $defaultTone = array_key_first($tones) ?? '';
-                        @endphp
                         @foreach($tones as $value => $label)
                             <option value="{{ $value }}" {{ old('tone', $input['tone'] ?? $defaultTone) === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
