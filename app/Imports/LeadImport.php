@@ -14,8 +14,12 @@ class LeadImport implements ToCollection, WithHeadingRow
 {
     private Collection $rows;
 
-    // config/excel.phpのformatter設定を保持して__destructで元の値に戻す
+    // config/excel.phpのformatter設定を退避して復元に使う
     private string $originalFormatter;
+
+    // collection()またはコンストラクタ未実行時を区別するためのフラグ
+    // trueになると__destructでの二重復元を防ぐ
+    private bool $formatterRestored = false;
 
     public function __construct()
     {
@@ -26,10 +30,13 @@ class LeadImport implements ToCollection, WithHeadingRow
         HeadingRowFormatter::default('none');
     }
 
-    // 例外などで collection() が呼ばれなかった場合の保険としてグローバル設定を元に戻す
+    // collection()が呼ばれなかった場合（例外・スキップ等）の保険として復元する
+    // 既にcollection()で復元済みの場合は後続処理が意図的に変えたformatterを上書きしないようスキップ
     public function __destruct()
     {
-        HeadingRowFormatter::default($this->originalFormatter);
+        if (!$this->formatterRestored) {
+            HeadingRowFormatter::default($this->originalFormatter);
+        }
     }
 
     // WithHeadingRowがヘッダー行をスキップしコレクションとして渡す
@@ -38,17 +45,20 @@ class LeadImport implements ToCollection, WithHeadingRow
     {
         $columns = config('bulk_import.columns', []);
 
-        $this->rows = $rows->map(function ($row) use ($columns) {
-            $mapped = [];
-            // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
-            foreach ($columns as $englishKey => $japaneseHeader) {
-                $mapped[$englishKey] = $row[$japaneseHeader] ?? null;
-            }
-            return collect($mapped);
-        });
-
-        // 通常系では即座に元のformatterに戻して同一リクエスト内の後続Importへの影響を防ぐ
-        HeadingRowFormatter::default($this->originalFormatter);
+        try {
+            $this->rows = $rows->map(function ($row) use ($columns) {
+                $mapped = [];
+                // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
+                foreach ($columns as $englishKey => $japaneseHeader) {
+                    $mapped[$englishKey] = $row[$japaneseHeader] ?? null;
+                }
+                return collect($mapped);
+            });
+        } finally {
+            // 例外発生時も含め必ず元のformatterに戻し後続Importへの影響を閉じる
+            HeadingRowFormatter::default($this->originalFormatter);
+            $this->formatterRestored = true;
+        }
     }
 
     // パース済みの全行を英語キーのコレクションとして返す
