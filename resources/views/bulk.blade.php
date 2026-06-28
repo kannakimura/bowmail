@@ -19,28 +19,28 @@
 
     <div class="card">
         <h2>Excelファイルをアップロード</h2>
-        <form method="POST" action="#" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('bulk.upload') }}" enctype="multipart/form-data">
             @csrf
             <div class="form-group" style="margin-bottom: 20px;">
                 <label for="file">リストファイル（.xlsx）<span style="color:#e53e3e"> *</span></label>
-                <input type="file" id="file" name="file" accept=".xlsx">
+                <input type="file" id="file" name="file" accept=".xlsx" required>
                 <span class="hint">列構成：会社名 / メールアドレス / 訪問ページ / フェーズ</span>
             </div>
 
             <div class="form-grid" style="margin-bottom: 24px;">
                 <div class="form-group">
                     <label for="sender_name">送信者名 <span style="color:#e53e3e">*</span></label>
-                    <input type="text" id="sender_name" name="sender_name" placeholder="例：田中 太郎" value="{{ old('sender_name') }}">
+                    <input type="text" id="sender_name" name="sender_name" placeholder="例：田中 太郎" value="{{ old('sender_name') }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="sender_company">送信者の会社名 <span style="color:#e53e3e">*</span></label>
-                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company') }}">
+                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company') }}" required>
                 </div>
 
                 <div class="form-group">
                     <label for="tone">メールのトーン <span style="color:#e53e3e">*</span></label>
-                    <select id="tone" name="tone">
+                    <select id="tone" name="tone" required>
                         <option value="polite" {{ old('tone', 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
                         <option value="casual" {{ old('tone') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
                     </select>
