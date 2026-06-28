@@ -33,7 +33,7 @@
                     <label for="visited_page">訪問したページ <span class="required-mark">*</span></label>
                     <select id="visited_page" name="visited_page" required>
                         <option value="">選択してください</option>
-                        @foreach(['料金ページ', '導入事例ページ', '機能紹介ページ', '資料ダウンロードページ', 'お問い合わせページ（未送信）', 'トップページ'] as $page)
+                        @foreach(config('mail_options.visited_pages') as $page)
                             <option value="{{ $page }}" {{ old('visited_page', $input['visited_page'] ?? '') === $page ? 'selected' : '' }}>{{ $page }}</option>
                         @endforeach
                     </select>
@@ -44,7 +44,7 @@
                     <label for="phase">検討フェーズ <span class="required-mark">*</span></label>
                     <select id="phase" name="phase" required>
                         <option value="">選択してください</option>
-                        @foreach(['認知（初回訪問）', '比較検討中', '導入検討中', '失注後フォロー'] as $p)
+                        @foreach(config('mail_options.phases') as $p)
                             <option value="{{ $p }}" {{ old('phase', $input['phase'] ?? '') === $p ? 'selected' : '' }}>{{ $p }}</option>
                         @endforeach
                     </select>
@@ -54,8 +54,9 @@
                 <div class="form-group">
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone" required>
-                        <option value="polite" {{ old('tone', $input['tone'] ?? 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
-                        <option value="casual" {{ old('tone', $input['tone'] ?? '') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
+                        @foreach(config('mail_options.tones') as $value => $label)
+                            <option value="{{ $value }}" {{ old('tone', $input['tone'] ?? 'polite') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                     @error('tone')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
