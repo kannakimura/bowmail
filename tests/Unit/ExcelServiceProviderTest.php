@@ -32,10 +32,13 @@ class ExcelServiceProviderTest extends TestCase
         $this->assertInstanceOf(Excel::class, \Excel::getFacadeRoot());
     }
 
-    // config/excel.phpが読み込まれトップレベルキーが存在すること
-    // has()で存在を確認したうえでデフォルト付きで取得しCLAUDE.mdのconfig規約に準拠する
+    // vendor:publishによりconfig/excel.phpが生成・配置されており読み込まれていること
+    // ファイルの物理的な存在とconfigリポジトリへの登録を両方確認する
     public function test_excel設定ファイルが読み込まれていること(): void
     {
+        // config/excel.phpがvendor:publishで生成されファイルとして存在すること
+        $this->assertFileExists(config_path('excel.php'));
+        // configリポジトリにexcelキーが登録されていること
         $this->assertTrue(config()->has('excel'));
         $config = config('excel', []);
         $this->assertIsArray($config);
