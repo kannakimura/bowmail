@@ -119,18 +119,18 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['tone']);
     }
 
-    // toneのバリデーションエラー時に画面にエラーメッセージが表示されること
+    // toneのバリデーションエラー時にリダイレクト先のビューにエラーメッセージが表示されること
     public function test_toneのバリデーションエラーがビューに表示されること(): void
     {
         $payload = $this->validPayload();
         $payload['tone'] = '不正なトーン';
 
-        $response = $this->post('/generate', $payload);
+        // followingRedirects()でリダイレクトを追従し、最終レスポンスのHTMLを検証する
+        $response = $this->followingRedirects()->post('/generate', $payload);
 
-        // エラー後にフォームへリダイレクトされ、セッションにエラーが入ること
-        $response->assertSessionHasErrors(['tone']);
-        // Bladeの@error('tone')がレンダリングされることをリダイレクト先で確認する
-        $response->assertRedirect();
+        // Bladeの@error('tone')がレンダリングされてエラー文言が画面に出ること
+        $response->assertStatus(200);
+        $response->assertSee('The selected tone is invalid.', false);
     }
 
     // company_nameに配列を送った場合にバリデーションエラーになること
