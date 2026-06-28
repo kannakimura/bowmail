@@ -166,7 +166,8 @@
             </div>
 
             <div style="margin-top: 24px;">
-                <button type="submit" class="btn">メールを生成する</button>
+                {{-- ローディング中はボタンを非活性にしてテキストを変える --}}
+                <button type="submit" id="submit-btn" class="btn">メールを生成する</button>
             </div>
         </form>
     </div>
@@ -184,6 +185,10 @@
             <div class="result-box" id="body-box">{{ $body }}</div>
             <button class="copy-btn" onclick="copyText('body-box', this)">コピー</button>
         </div>
+        {{-- 再生成ボタン：フォームを再submitする --}}
+        <div style="margin-top: 20px;">
+            <button class="btn" style="background:#6b7280;" onclick="document.querySelector('form').submit(); return false;">もう一度生成する</button>
+        </div>
     </div>
     @endisset
 
@@ -192,6 +197,14 @@
 <div class="footer">BowMail — Powered by Claude AI</div>
 
 <script>
+// フォーム送信時にボタンをローディング状態にする
+document.querySelector('form').addEventListener('submit', function () {
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = '生成中...';
+    btn.disabled = true;
+});
+
+// コピーボタンの処理
 function copyText(id, btn) {
     const text = document.getElementById(id).innerText;
     navigator.clipboard.writeText(text).then(() => {
