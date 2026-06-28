@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Services\BulkImportService;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 // 一括メール生成機能のFeatureテスト
