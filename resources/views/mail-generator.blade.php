@@ -185,9 +185,9 @@
             <div class="result-box" id="body-box">{{ $body }}</div>
             <button class="copy-btn" onclick="copyText('body-box', this)">コピー</button>
         </div>
-        {{-- 再生成ボタン：フォームを再submitする --}}
+        {{-- 再生成ボタン：requestSubmit()でsubmitイベントを発火してローディング表示も動かす --}}
         <div style="margin-top: 20px;">
-            <button class="btn" style="background:#6b7280;" onclick="document.querySelector('form').submit(); return false;">もう一度生成する</button>
+            <button class="btn" style="background:#6b7280;" onclick="document.querySelector('form').requestSubmit(); return false;">もう一度生成する</button>
         </div>
     </div>
     @endisset
