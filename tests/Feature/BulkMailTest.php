@@ -7,6 +7,13 @@ use Tests\TestCase;
 // 一括メール生成機能のFeatureテスト
 class BulkMailTest extends TestCase
 {
+    // テストごとにユニークなIPでPOSTしてスロットリングの干渉を防ぐ
+    private function postWithUniqueIp(string $url, array $data = []): \Illuminate\Testing\TestResponse
+    {
+        return $this->withServerVariables(['REMOTE_ADDR' => '127.' . rand(1, 254) . '.' . rand(0, 254) . '.' . rand(1, 254)])
+            ->post($url, $data);
+    }
+
     // バリデーションを通過する有効なペイロードを返す
     private function validPayload(): array
     {
@@ -68,7 +75,7 @@ class BulkMailTest extends TestCase
     // 有効なxlsxファイルをPOSTするとアップロード画面へリダイレクトされること（405にならないこと）
     public function test_POST_bulk_uploadが405にならないこと(): void
     {
-        $response = $this->post(route('bulk.upload'), $this->validPayload());
+        $response = $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
         // Phase 1-3実装前はアップロード画面へのリダイレクトが返ること
         $response->assertRedirect(route('bulk'));
@@ -79,7 +86,9 @@ class BulkMailTest extends TestCase
     public function test_POST_bulk_upload後に入力値がビューに保持されること(): void
     {
         // followingRedirects()でリダイレクト先まで追従し、old()がビューに反映されることを確認する
-        $response = $this->followingRedirects()->post(route('bulk.upload'), $this->validPayload());
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.1'])
+            ->followingRedirects()
+            ->post(route('bulk.upload'), $this->validPayload());
 
         $response->assertStatus(200);
         $response->assertSee('田中 太郎');
@@ -89,7 +98,7 @@ class BulkMailTest extends TestCase
     // ファイルを添付せずにPOSTするとバリデーションエラーになること
     public function test_ファイル未添付でPOSTするとバリデーションエラーになること(): void
     {
-        $response = $this->post(route('bulk.upload'));
+        $response = $this->postWithUniqueIp(route('bulk.upload'));
 
         $response->assertSessionHasErrors(['file']);
     }
@@ -99,6 +108,7 @@ class BulkMailTest extends TestCase
     {
         // refererをbulkに設定してback()が正しく/bulkへ戻ることを保証する
         $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => '192.168.1.2'])
             ->followingRedirects()
             ->post(route('bulk.upload'));
 
@@ -112,7 +122,7 @@ class BulkMailTest extends TestCase
         $payload         = $this->validPayload();
         $payload['file'] = \Illuminate\Http\UploadedFile::fake()->create('malicious.exe', 100, 'application/octet-stream');
 
-        $response = $this->post(route('bulk.upload'), $payload);
+        $response = $this->postWithUniqueIp(route('bulk.upload'), $payload);
 
         $response->assertSessionHasErrors(['file']);
     }
@@ -123,7 +133,7 @@ class BulkMailTest extends TestCase
         $payload         = $this->validPayload();
         $payload['file'] = \Illuminate\Http\UploadedFile::fake()->create('large.xlsx', 6000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
-        $response = $this->post(route('bulk.upload'), $payload);
+        $response = $this->postWithUniqueIp(route('bulk.upload'), $payload);
 
         $response->assertSessionHasErrors(['file']);
     }
