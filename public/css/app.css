@@ -102,3 +102,25 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 .nav-link:hover { text-decoration: underline; }
 
 .footer { text-align: center; font-size: 12px; color: #9ca3af; padding: 20px 0 40px; }
+
+/* 必須マーク */
+.required-mark { color: #e53e3e; }
+
+/* バリデーションエラーメッセージ */
+.field-error { color: #e53e3e; font-size: 12px; }
+
+/* フォームグループの下マージン */
+.form-group--mb20 { margin-bottom: 20px; }
+
+/* フォームグリッドの下マージン */
+.form-grid--mb24 { margin-bottom: 24px; }
+
+/* 送信ボタン上マージン */
+.submit-area { margin-top: 24px; }
+
+/* 再生成ボタンエリア */
+.regenerate-area { margin-top: 20px; }
+
+/* 再生成ボタン（グレー） */
+.btn--gray { background: #6b7280; }
+.btn--gray:hover { background: #4b5563; }
