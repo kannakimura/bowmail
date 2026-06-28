@@ -45,7 +45,7 @@
                         <tr>
                             <th>#</th>
                             @php
-                                {{-- 列ヘッダーはconfig定義の日本語名を使いハードコードを避ける --}}
+                                // 列ヘッダーはconfig定義の日本語名を使いハードコードを避ける
                                 $columns = config('bulk_import.columns', []);
                             @endphp
                             @foreach ($columns as $label)
