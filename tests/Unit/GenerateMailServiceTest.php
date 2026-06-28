@@ -142,6 +142,33 @@ class GenerateMailServiceTest extends TestCase
         });
     }
 
+    // toneに未知のキーを渡したとき、任意文字列がプロンプトに混入せずconfigの先頭ラベルへフォールバックすること
+    public function test_不正なtoneキーのときデフォルトラベルがプロンプトに使われること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        $data         = $this->validData();
+        $data['tone'] = 'invalid_tone_key';
+
+        (new GenerateMailService())->generate($data);
+
+        Http::assertSent(function ($request) {
+            $content      = $request->data()['messages'][0]['content'];
+            $tones        = config('mail_options.tones', []);
+            $defaultLabel = reset($tones) ?: '丁寧（ビジネスフォーマル）';
+            // 未知キー自体がプロンプトに含まれないこと
+            $this->assertStringNotContainsString('invalid_tone_key', $content);
+            // configの先頭ラベルがプロンプトに含まれること
+            return str_contains($content, $defaultLabel);
+        });
+    }
+
     // company_nameが空のとき「相手の会社名：不明」がプロンプトに含まれること
     public function test_会社名未入力のとき不明がプロンプトに含まれること(): void
     {
