@@ -17,19 +17,18 @@ class BulkMailController extends Controller
         return view('bulk');
     }
 
-    // ExcelをBulkImportService経由でパースしてセッションに保存しプレビュー画面へリダイレクトする
-    // PRGパターンによりリロード時の二重送信を防ぐ
+    // ExcelをBulkImportService経由でパースしてフラッシュセッションでプレビュー画面へリダイレクトする
+    // redirect()->with()でflash保存することでPRGパターンを正しく実現し直アクセス時に過去データが残らない
     public function upload(BulkUploadRequest $request)
     {
         $rows = $this->bulkImportService->parse(
             $request->file('file')->getPathname()
         );
 
-        // 送信者情報・パース済み行データをセッションに保存してGETへ引き渡す
-        session()->put('bulk_input', $request->safe()->only(['sender_name', 'sender_company', 'tone']));
-        session()->put('bulk_rows', $rows->map(fn ($row) => $row->toArray())->toArray());
-
-        return redirect()->route('bulk.preview');
+        return redirect()->route('bulk.preview')->with([
+            'bulk_input' => $request->safe()->only(['sender_name', 'sender_company', 'tone']),
+            'bulk_rows'  => $rows->map(fn ($row) => $row->toArray())->toArray(),
+        ]);
     }
 
     // セッションからパース済みデータを受け取りプレビュー画面を表示する
