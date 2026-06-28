@@ -173,7 +173,8 @@
         </form>
     </div>
 
-    @isset($subject, $body)
+    {{-- PRGパターン：セッションflashからnullでない値が渡ってきた場合のみ結果を表示する --}}
+    @if(!is_null($subject ?? null) && !is_null($body ?? null))
     <div class="card">
         <h2>生成されたメール</h2>
         <div class="subject-box">
@@ -191,7 +192,7 @@
             <button class="btn" style="background:#6b7280;" onclick="document.querySelector('form').requestSubmit(); return false;">もう一度生成する</button>
         </div>
     </div>
-    @endisset
+    @endif
 
 </div>
 
