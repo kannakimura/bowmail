@@ -24,25 +24,29 @@ class ExcelServiceProviderTest extends TestCase
         $this->assertInstanceOf(Excel::class, ExcelFacade::getFacadeRoot());
     }
 
-    // package:discoverによるグローバルエイリアス\ExcelがFacadeとして解決できること
+    // package:discoverによるパッケージmanifest経由でグローバルエイリアス\ExcelがFacadeとして解決できること
     public function test_グローバルエイリアスExcelがファサードとして解決できること(): void
     {
-        // config/app.phpのaliasesに登録されグローバルに\Excel::class が使えること
+        // package:discoverが自動登録したエイリアス経由でグローバルに\Excel::classが使えること
         $this->assertTrue(class_exists(\Excel::class));
         $this->assertInstanceOf(Excel::class, \Excel::getFacadeRoot());
     }
 
     // config/excel.phpが読み込まれトップレベルキーが存在すること
-    // 空配列でのフォールスルーを防ぐためexportsキーの存在まで確認する
+    // has()で存在を確認したうえでデフォルト付きで取得しCLAUDE.mdのconfig規約に準拠する
     public function test_excel設定ファイルが読み込まれていること(): void
     {
-        $this->assertIsArray(config('excel'));
-        $this->assertArrayHasKey('exports', config('excel'));
+        $this->assertTrue(config()->has('excel'));
+        $config = config('excel', []);
+        $this->assertIsArray($config);
+        $this->assertArrayHasKey('exports', $config);
     }
 
     // 一時ファイルのローカルパスが設定されていること
+    // not nullだけでなくnot emptyまで確認しパスが実際に設定されていることを保証する
     public function test_excelの一時ファイルパス設定が存在すること(): void
     {
-        $this->assertNotNull(config('excel.temporary_files.local_path'));
+        $path = config('excel.temporary_files.local_path', '');
+        $this->assertNotEmpty($path);
     }
 }
