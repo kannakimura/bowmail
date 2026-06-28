@@ -157,16 +157,15 @@ class BulkMailTest extends TestCase
     {
         $content = $this->get('/bulk')->content();
 
-        // <input>に限定し、name・accept・空白区切りrequiredが順不同で存在することを検証する
+        // lookaheadで属性順非依存・\srequired(?=[\s\/>])でハイフン付き属性への誤マッチを防ぐ
         $this->assertMatchesRegularExpression(
-            '/<input[^>]*name="file"[^>]*accept="\.xlsx"[^>]*(?<!\w)required(?!\w)[^>]*>/',
+            '/<input(?=[^>]*\sname="file")(?=[^>]*\saccept="\.xlsx")(?=[^>]*\srequired(?=[\s\/>]))[^>]*>/',
             $content,
             'ファイル入力にaccept=".xlsx"とrequiredが付いていません'
         );
-        // <input|select|textarea>に限定し、空白区切りの required 属性を検出する
         foreach (['sender_name', 'sender_company', 'tone'] as $field) {
             $this->assertMatchesRegularExpression(
-                '/<(?:input|select|textarea)[^>]*name="' . $field . '"[^>]*(?<!\w)required(?!\w)[^>]*>/',
+                '/<(?:input|select|textarea)(?=[^>]*\sname="' . $field . '")(?=[^>]*\srequired(?=[\s\/>]))[^>]*>/',
                 $content,
                 "{$field} フィールドにrequired属性が付いていません"
             );
