@@ -55,7 +55,8 @@
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
                     <select id="tone" name="tone" required>
                         @foreach(config('mail_options.tones') as $value => $label)
-                            <option value="{{ $value }}" {{ old('tone', $input['tone'] ?? 'polite') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            {{-- デフォルトはconfigの先頭キーを使いハードコードを避ける --}}
+                            <option value="{{ $value }}" {{ old('tone', $input['tone'] ?? array_key_first(config('mail_options.tones'))) === $value ? 'selected' : '' }}>{{ $label }}</option>
                         @endforeach
                     </select>
                     @error('tone')<span class="field-error">{{ $message }}</span>@enderror
