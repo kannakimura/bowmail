@@ -286,6 +286,18 @@ class MailGeneratorTest extends TestCase
         $response->assertSessionHasErrors(['sender_company']);
     }
 
+    // 必須フィールドにrequired属性が付いていること（サーバ側バリデーションとUIの一致確認）
+    public function test_必須フィールドにrequired属性が付いていること(): void
+    {
+        $html = $this->get('/')->content();
+
+        $this->assertMatchesRegularExpression('/name="visited_page"[^>]*required/', $html);
+        $this->assertMatchesRegularExpression('/name="phase"[^>]*required/', $html);
+        $this->assertMatchesRegularExpression('/name="tone"[^>]*required/', $html);
+        $this->assertMatchesRegularExpression('/name="sender_name"[^>]*required/', $html);
+        $this->assertMatchesRegularExpression('/name="sender_company"[^>]*required/', $html);
+    }
+
     // トップページが正常に表示されること
     public function test_トップページが表示されること(): void
     {
