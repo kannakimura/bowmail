@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+
 // 一括メール生成機能のコントローラー
 // Excel アップロード → 一括生成 → Excel ダウンロードの流れを担当する
 class BulkMailController extends Controller
@@ -12,11 +14,16 @@ class BulkMailController extends Controller
         return view('bulk');
     }
 
-    // Excelアップロードを受け取る（Phase 1-3以降で実装予定）
+    // Excelアップロードを受け取る（Phase 1-3以降でパース処理を実装予定）
+    // 暫定でもMIMEとサイズの最低限チェックを行い不正ファイルをサーバに蓄積させない
     // withInput()で入力値をflashに保持してから戻すことでold()が機能しUXを保つ
-    // ファイル自体はwithInput()でフラッシュされないため誤ったファイル保持は起きない
-    public function upload()
+    public function upload(Request $request)
     {
+        $request->validate([
+            // xlsxのMIMEタイプを許可・最大5MBに制限する
+            'file' => ['nullable', 'file', 'mimes:xlsx', 'max:5120'],
+        ]);
+
         return redirect()->route('bulk')->withInput();
     }
 }
