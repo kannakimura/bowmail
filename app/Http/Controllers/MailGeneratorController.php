@@ -80,7 +80,8 @@ PROMPT;
                 'anthropic-version' => '2023-06-01',
                 'content-type'      => 'application/json',
             ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-                'model'      => 'claude-haiku-4-5-20251001',
+                // モデル名はconfig経由で取得し、.envで環境ごとに切り替えられるようにする
+                'model'      => config('services.anthropic.model'),
                 'max_tokens' => 1024,
                 'messages'   => [
                     ['role' => 'user', 'content' => $prompt],
