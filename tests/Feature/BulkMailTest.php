@@ -94,13 +94,17 @@ class BulkMailTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/<[^>]+style="[^"]*"[^>]*>/', $html);
     }
 
-    // 必須フィールドにrequired属性が付いていること
+    // 必須フィールドにrequired属性とaccept属性が付いていること
+    // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
     {
         $content = $this->get('/bulk')->content();
 
-        $this->assertStringContainsString('name="file" accept=".xlsx" required', $content);
-        $this->assertStringContainsString('name="sender_name"', $content);
+        // name="file"タグにaccept=".xlsx"とrequiredが順不同で含まれること
+        $fileInputHasRequired =
+            (bool) preg_match('/name="file"[^>]*accept="\.xlsx"[^>]*required/', $content) ||
+            (bool) preg_match('/name="file"[^>]*required[^>]*accept="\.xlsx"/', $content);
+        $this->assertTrue($fileInputHasRequired, 'ファイル入力にaccept=".xlsx"とrequiredが付いていません');
         $this->assertMatchesRegularExpression('/name="sender_name"[^>]*required/', $content);
         $this->assertMatchesRegularExpression('/name="sender_company"[^>]*required/', $content);
         $this->assertMatchesRegularExpression('/name="tone"[^>]*required/', $content);
