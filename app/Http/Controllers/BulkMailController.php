@@ -13,9 +13,10 @@ class BulkMailController extends Controller
     }
 
     // Excelアップロードを受け取る（Phase 1-3以降で実装予定）
-    // 現時点ではアップロード画面へリダイレクトして405を回避する
+    // withInput()で入力値をflashに保持してから戻すことでold()が機能しUXを保つ
+    // ファイル自体はwithInput()でフラッシュされないため誤ったファイル保持は起きない
     public function upload()
     {
-        return redirect()->route('bulk');
+        return redirect()->route('bulk')->withInput();
     }
 }
