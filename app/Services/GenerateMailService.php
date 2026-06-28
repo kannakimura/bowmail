@@ -51,9 +51,9 @@ class GenerateMailService
     private function buildPrompt(array $data): string
     {
         // toneキーを一度取り出してUndefined indexを防ぐ
+        // バリデーション外から配列等が混入してもIllegal offset typeにならないよう文字列以外は空に落とす
         // 未知キー時は polite ラベルを優先し、polite が存在しない場合のみ先頭ラベルへフォールバックする
-        // configの並び順に依存しないよう polite を明示的に参照する
-        $toneKey      = $data['tone'] ?? '';
+        $toneKey      = is_string($data['tone'] ?? null) ? $data['tone'] : '';
         $tones        = config('mail_options.tones', []);
         $defaultLabel = $tones['polite'] ?? (reset($tones) ?: '');
         $tone         = $tones[$toneKey] ?? $defaultLabel;
