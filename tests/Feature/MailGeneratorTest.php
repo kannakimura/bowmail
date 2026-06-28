@@ -31,8 +31,8 @@ class MailGeneratorTest extends TestCase
         ];
     }
 
-    // Anthropic APIが正常に返した場合に件名・本文が表示されること
-    public function test_メール生成が成功すること(): void
+    // Anthropic APIが正常に返した場合にGETリダイレクト（PRGパターン）されること
+    public function test_メール生成が成功するとresultへリダイレクトされること(): void
     {
         // Claude APIのレスポンスをフェイクする
         Http::fake([
@@ -43,11 +43,39 @@ class MailGeneratorTest extends TestCase
             ], 200),
         ]);
 
+        // POSTはGET /resultへリダイレクトされること（PRGパターン）
         $response = $this->post('/generate', $this->validPayload());
+        $response->assertRedirect(route('generate.result'));
+    }
+
+    // GET /resultでセッションflashから生成結果が表示されること
+    public function test_resultページで生成結果が表示されること(): void
+    {
+        Http::fake([
+            'api.anthropic.com/*' => Http::response([
+                'content' => [
+                    ['type' => 'text', 'text' => "件名：テスト件名\n\n本文：\nテスト本文です。"],
+                ],
+            ], 200),
+        ]);
+
+        // POSTしてリダイレクト先のGETを続けて確認する
+        $this->post('/generate', $this->validPayload());
+        $result = $this->get(route('generate.result'));
+
+        $result->assertStatus(200);
+        $result->assertSee('テスト件名');
+        $result->assertSee('テスト本文です。');
+    }
+
+    // GET /resultをリロードしても結果カードが表示されないこと（flashは1回で消える）
+    public function test_resultページのリロードで結果が再表示されないこと(): void
+    {
+        // セッションflashなしで直接GETすると結果カードが表示されないこと
+        $response = $this->get(route('generate.result'));
 
         $response->assertStatus(200);
-        $response->assertSee('テスト件名');
-        $response->assertSee('テスト本文です。');
+        $response->assertDontSee('生成されたメール');
     }
 
     // 必須項目が未入力の場合にバリデーションエラーが返ること
@@ -206,7 +234,7 @@ class MailGeneratorTest extends TestCase
         });
     }
 
-    // 成功時にビューへ渡すinputにCSRFトークン(_token)が含まれないこと
+    // 成功後のGETページでViewへ渡すinputにCSRFトークン(_token)が含まれないこと
     public function test_生成成功時のinputに_tokenが含まれないこと(): void
     {
         Http::fake([
@@ -217,9 +245,10 @@ class MailGeneratorTest extends TestCase
             ], 200),
         ]);
 
-        $response = $this->post('/generate', $this->validPayload());
+        // POSTしてリダイレクト先のGETを続けて確認する
+        $this->post('/generate', $this->validPayload());
+        $response = $this->get(route('generate.result'));
 
-        // レスポンスHTMLに_tokenの値が隠しフィールド以外で露出していないこと
         // validated()を使うことで_tokenがView変数inputに混入しない
         $response->assertStatus(200);
         $response->assertViewHas('input');
