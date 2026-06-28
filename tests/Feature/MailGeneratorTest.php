@@ -9,6 +9,15 @@ use Tests\TestCase;
 // /generate エンドポイントのFeatureテスト
 class MailGeneratorTest extends TestCase
 {
+    // 各テスト前にダミーAPIキーをセットする
+    // これがないとAPIキー未設定チェックで早期returnしてしまい、
+    // API通信を模擬するテストが実際には実行されない
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['services.anthropic.key' => 'test-api-key']);
+    }
+
     // テストで共通して使う正常な入力データ
     private function validPayload(): array
     {

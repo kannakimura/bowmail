@@ -11,6 +11,15 @@ use Tests\TestCase;
 // API呼び出し・レスポンスパース・エラーハンドリングを検証する
 class GenerateMailServiceTest extends TestCase
 {
+    // 各テスト前にダミーAPIキーをセットする
+    // これがないとAPIキー未設定チェックで早期returnしてしまい、
+    // API通信を模擬するテストが実際には実行されない
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['services.anthropic.key' => 'test-api-key']);
+    }
+
     // テストで共通して使う入力データ
     private function validData(): array
     {
@@ -46,6 +55,7 @@ class GenerateMailServiceTest extends TestCase
     // APIキーが未設定の場合にerrorキーが返ること
     public function test_APIキー未設定のときerrorが返ること(): void
     {
+        // このテストだけキーを空に上書きして未設定状態を再現する
         config(['services.anthropic.key' => '']);
 
         $result = (new GenerateMailService())->generate($this->validData());
