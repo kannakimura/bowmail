@@ -19,6 +19,13 @@ class LeadImportTest extends TestCase
         $this->validFile = base_path('tests/fixtures/leads_valid.xlsx');
     }
 
+    // テスト失敗時もformatterが'none'のまま後続テストに影響しないよう元の値に戻す
+    protected function tearDown(): void
+    {
+        HeadingRowFormatter::default(config('excel.imports.heading_row.formatter', 'slug'));
+        parent::tearDown();
+    }
+
     // config/bulk_import.phpに期待する列キーが定義されていること
     public function test_bulk_import設定に期待する列キーが定義されていること(): void
     {
@@ -118,5 +125,25 @@ class LeadImportTest extends TestCase
         $actual = $property->getValue(null);
 
         $this->assertSame($expected, $actual);
+    }
+
+    // collection()完了後に__destruct()が呼ばれても二重復元で後続のformatter変更を上書きしないこと
+    public function test_collection完了後のdestructは後続のformatter変更を上書きしないこと(): void
+    {
+        $import = new LeadImport();
+        Excel::import($import, $this->validFile);
+
+        // collection()完了後に後続処理が意図的にformatterを変更したと仮定する
+        HeadingRowFormatter::default('none');
+
+        // importインスタンスを破棄しても後続の'none'設定が上書きされないこと
+        unset($import);
+
+        $reflection = new \ReflectionClass(HeadingRowFormatter::class);
+        $property   = $reflection->getProperty('formatter');
+        $property->setAccessible(true);
+        $actual = $property->getValue(null);
+
+        $this->assertSame('none', $actual);
     }
 }
