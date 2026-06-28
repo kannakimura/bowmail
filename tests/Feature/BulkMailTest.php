@@ -154,6 +154,41 @@ class BulkMailTest extends TestCase
         $response->assertStatus(200);
     }
 
+    // パース中に例外が発生するとアップロード画面へ戻りfileエラーが表示されること
+    public function test_パース例外発生時にアップロード画面へ戻りエラーが表示されること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')
+                ->once()
+                ->andThrow(new \RuntimeException('破損したファイルです'));
+        });
+
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => '192.168.1.10'])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertRedirect(route('bulk'));
+        $response->assertSessionHasErrors(['file']);
+    }
+
+    // パース例外時のエラーメッセージが画面に表示されること
+    public function test_パース例外時のエラーメッセージがビューに表示されること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')
+                ->once()
+                ->andThrow(new \RuntimeException('破損したファイルです'));
+        });
+
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => '192.168.1.11'])
+            ->followingRedirects()
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertStatus(200);
+        $response->assertSee('ファイルの読み込みに失敗しました');
+    }
+
     // ファイルを添付せずにPOSTするとバリデーションエラーになること
     public function test_ファイル未添付でPOSTするとバリデーションエラーになること(): void
     {
