@@ -72,12 +72,13 @@ PROMPT;
         }
 
         // Claude APIを呼び出す（タイムアウト・接続エラーはConnectionExceptionで捕捉する）
+        // timeout(30)：30秒応答がなければConnectionExceptionを発生させてプロセスブロックを防ぐ
         try {
             $response = Http::withHeaders([
                 'x-api-key'         => config('services.anthropic.key'),
                 'anthropic-version' => '2023-06-01',
                 'content-type'      => 'application/json',
-            ])->post('https://api.anthropic.com/v1/messages', [
+            ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
                 'model'      => 'claude-haiku-4-5-20251001',
                 'max_tokens' => 1024,
                 'messages'   => [
