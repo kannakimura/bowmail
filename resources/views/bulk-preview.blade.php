@@ -46,7 +46,9 @@
                             <th>#</th>
                             @php
                                 // 列ヘッダーはconfig定義の日本語名を使いハードコードを避ける
-                                $columns = config('bulk_import.columns', []);
+                                // $columnKeysをループ外で1回だけ生成し行数分の不要な配列生成を防ぐ
+                                $columns     = config('bulk_import.columns', []);
+                                $columnKeys  = array_keys($columns);
                             @endphp
                             @foreach ($columns as $label)
                                 <th>{{ $label }}</th>
@@ -57,7 +59,7 @@
                         @foreach ($rows as $index => $row)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                @foreach (array_keys($columns) as $key)
+                                @foreach ($columnKeys as $key)
                                     <td>{{ $row[$key] ?? '' }}</td>
                                 @endforeach
                             </tr>
