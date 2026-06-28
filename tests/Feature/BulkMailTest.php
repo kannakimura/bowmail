@@ -41,4 +41,33 @@ class BulkMailTest extends TestCase
 
         $response->assertSee(route('home'));
     }
+
+    // フォームのactionがPOST /bulk/uploadを向いていること（405回避）
+    public function test_フォームのactionがbulk_uploadルートを向いていること(): void
+    {
+        $response = $this->get('/bulk');
+
+        $response->assertSee(route('bulk.upload'), false);
+    }
+
+    // POST /bulk/uploadが405ではなくリダイレクトを返すこと
+    public function test_POST_bulk_uploadが405にならないこと(): void
+    {
+        $response = $this->post(route('bulk.upload'));
+
+        // Phase 1-3実装前はアップロード画面へのリダイレクトが返ること
+        $response->assertRedirect(route('bulk'));
+    }
+
+    // 必須フィールドにrequired属性が付いていること
+    public function test_必須フィールドにrequired属性が付いていること(): void
+    {
+        $content = $this->get('/bulk')->content();
+
+        $this->assertStringContainsString('name="file" accept=".xlsx" required', $content);
+        $this->assertStringContainsString('name="sender_name"', $content);
+        $this->assertMatchesRegularExpression('/name="sender_name"[^>]*required/', $content);
+        $this->assertMatchesRegularExpression('/name="sender_company"[^>]*required/', $content);
+        $this->assertMatchesRegularExpression('/name="tone"[^>]*required/', $content);
+    }
 }
