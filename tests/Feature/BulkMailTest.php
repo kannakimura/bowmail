@@ -100,13 +100,18 @@ class BulkMailTest extends TestCase
     {
         $content = $this->get('/bulk')->content();
 
-        // name="file"タグにaccept=".xlsx"とrequiredが順不同で含まれること
-        $fileInputHasRequired =
-            (bool) preg_match('/name="file"[^>]*accept="\.xlsx"[^>]*required/', $content) ||
-            (bool) preg_match('/name="file"[^>]*required[^>]*accept="\.xlsx"/', $content);
-        $this->assertTrue($fileInputHasRequired, 'ファイル入力にaccept=".xlsx"とrequiredが付いていません');
-        $this->assertMatchesRegularExpression('/name="sender_name"[^>]*required/', $content);
-        $this->assertMatchesRegularExpression('/name="sender_company"[^>]*required/', $content);
-        $this->assertMatchesRegularExpression('/name="tone"[^>]*required/', $content);
+        // lookaheadで属性順に依存せず同一タグ内にname・accept・requiredが存在することを検証する
+        $this->assertMatchesRegularExpression(
+            '/<[^>]*(?=.*name="file")(?=.*accept="\.xlsx")(?=.*required)[^>]*>/',
+            $content,
+            'ファイル入力にaccept=".xlsx"とrequiredが付いていません'
+        );
+        foreach (['sender_name', 'sender_company', 'tone'] as $field) {
+            $this->assertMatchesRegularExpression(
+                '/<[^>]*(?=.*name="' . $field . '")(?=.*required)[^>]*>/',
+                $content,
+                "{$field} フィールドにrequired属性が付いていません"
+            );
+        }
     }
 }
