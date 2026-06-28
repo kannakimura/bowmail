@@ -338,8 +338,14 @@ class BulkMailTest extends TestCase
         ])->get(route('bulk.preview'));
 
         $response->assertStatus(200);
+        // assertSee($label)だと送信者情報バッジ等に同名文字列があっても通るため
+        // <th>タグを含めて検証しテーブルヘッダーとして表示されていることを保証する
         foreach ($columns as $label) {
-            $response->assertSee($label);
+            $this->assertMatchesRegularExpression(
+                '/<th[^>]*>\s*' . preg_quote($label, '/') . '\s*<\/th>/',
+                $response->content(),
+                "テーブルヘッダー <th>{$label}</th> が見つかりません"
+            );
         }
     }
 
