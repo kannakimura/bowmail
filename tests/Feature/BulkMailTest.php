@@ -59,6 +59,21 @@ class BulkMailTest extends TestCase
         $response->assertRedirect(route('bulk'));
     }
 
+    // POST /bulk/upload後に入力値がold()で保持されてビューに反映されること（withInput確認）
+    public function test_POST_bulk_upload後に入力値がビューに保持されること(): void
+    {
+        // followingRedirects()でリダイレクト先まで追従し、old()がビューに反映されることを確認する
+        $response = $this->followingRedirects()->post(route('bulk.upload'), [
+            'sender_name'    => '田中 太郎',
+            'sender_company' => 'クラウドサーカス株式会社',
+            'tone'           => 'polite',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('田中 太郎');
+        $response->assertSee('クラウドサーカス株式会社');
+    }
+
     // 必須フィールドにrequired属性が付いていること
     public function test_必須フィールドにrequired属性が付いていること(): void
     {
