@@ -54,4 +54,34 @@ class CopyButtonTest extends TestCase
             "execCommand('copy')フォールバックが実装されていません"
         );
     }
+
+    // finallyブロックでtextareaが必ず除去されること（例外時のDOMリーク防止）
+    public function test_fallbackCopyのfinallyでtextareaが除去されること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            'finally',
+            $content,
+            'finallyブロックが実装されていません'
+        );
+
+        $this->assertStringContainsString(
+            'removeChild(textarea)',
+            $content,
+            'finallyブロック内でtextareaのremoveChildが呼ばれていません'
+        );
+    }
+
+    // toneフィールドに@errorディレクティブが設定されていること
+    public function test_toneフィールドにエラー表示が実装されていること(): void
+    {
+        $content = file_get_contents(resource_path('views/mail-generator.blade.php'));
+
+        $this->assertStringContainsString(
+            "@error('tone')",
+            $content,
+            "@error('tone')が実装されていません"
+        );
+    }
 }

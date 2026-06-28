@@ -150,6 +150,7 @@
                         <option value="polite" {{ old('tone', $input['tone'] ?? 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
                         <option value="casual" {{ old('tone', $input['tone'] ?? '') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
                     </select>
+                    @error('tone')<span style="color:#e53e3e;font-size:12px">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
@@ -233,11 +234,19 @@ function fallbackCopy(text, btn) {
     textarea.style.top = '-9999px';
     textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
 
-    const success = document.execCommand('copy');
-    document.body.removeChild(textarea);
+    let success = false;
+    try {
+        textarea.focus();
+        textarea.select();
+        // execCommandは例外を投げることがあるためtry内で実行する
+        success = document.execCommand('copy');
+    } catch (e) {
+        success = false;
+    } finally {
+        // 成功・失敗・例外いずれの場合もtextareaを必ず除去する
+        document.body.removeChild(textarea);
+    }
 
     if (success) {
         showCopied(btn);
