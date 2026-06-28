@@ -74,6 +74,14 @@ class BulkMailTest extends TestCase
         $response->assertSee('クラウドサーカス株式会社');
     }
 
+    // アップロード画面にインラインスタイルが残っていないこと
+    public function test_アップロード画面にインラインスタイルが残っていないこと(): void
+    {
+        $content = file_get_contents(resource_path('views/bulk.blade.php'));
+
+        $this->assertStringNotContainsString('style=', $content);
+    }
+
     // 必須フィールドにrequired属性が付いていること
     public function test_必須フィールドにrequired属性が付いていること(): void
     {
