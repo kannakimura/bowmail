@@ -16,15 +16,15 @@ class GenerateMailRequest extends FormRequest
 
     // バリデーションルールを定義する
     // visited_page・phaseはin:でホワイトリスト検証してプロンプト注入を防ぐ
-    // company_nameはnullable|stringを指定して配列送信によるエラーを防ぐ
+    // 自由入力フィールドはnot_regexで改行を禁止してプロンプト構造の破壊を防ぐ
     public function rules(): array
     {
         return [
-            'company_name'   => 'nullable|string|max:100',
+            'company_name'   => ['nullable', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'visited_page'   => 'required|in:料金ページ,導入事例ページ,機能紹介ページ,資料ダウンロードページ,お問い合わせページ（未送信）,トップページ',
             'phase'          => 'required|in:認知（初回訪問）,比較検討中,導入検討中,失注後フォロー',
-            'sender_name'    => 'required|string|max:100',
-            'sender_company' => 'required|string|max:100',
+            'sender_name'    => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
+            'sender_company' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'tone'           => 'required|in:polite,casual',
         ];
     }
