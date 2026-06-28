@@ -19,7 +19,9 @@ class MailGeneratorController extends Controller
     public function generate(Request $request)
     {
         // バリデーション：必須項目とトーンの選択肢を検証する
+        // company_nameは任意だがnullable|stringを指定して配列送信によるエラーを防ぐ
         $request->validate([
+            'company_name'   => 'nullable|string|max:100',
             'visited_page'   => 'required|string',
             'phase'          => 'required|string',
             'sender_name'    => 'required|string|max:100',
