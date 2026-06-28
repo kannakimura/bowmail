@@ -18,21 +18,20 @@ class BulkImportService
     {
         $import = new LeadImport();
         Excel::import($import, $filePath);
-        $rows = $import->getRows();
 
-        $this->validateColumns($rows);
+        $this->validateColumns($import);
 
-        return $rows;
+        return $import->getRows();
     }
 
-    // パース済み行のキーがconfig定義の必須列をすべて含むか検証する
+    // ExcelのヘッダーがconfigのJapanese列名（値）をすべて含むか検証する
+    // LeadImportは??null で常に全英語キーをマップするため英語キーではなく日本語ヘッダーで判定する
     // 不足列がある場合はInvalidColumnExceptionを投げる
-    private function validateColumns(Collection $rows): void
+    private function validateColumns(LeadImport $import): void
     {
-        $requiredKeys   = array_keys(config('bulk_import.columns', []));
-        $firstRow       = $rows->first();
-        $actualKeys     = $firstRow ? $firstRow->keys()->all() : [];
-        $missingColumns = array_values(array_diff($requiredKeys, $actualKeys));
+        $requiredHeaders = array_values(config('bulk_import.columns', []));
+        $actualHeaders   = $import->getActualHeaders();
+        $missingColumns  = array_values(array_diff($requiredHeaders, $actualHeaders));
 
         if (!empty($missingColumns)) {
             throw new InvalidColumnException($missingColumns);
