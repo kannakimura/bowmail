@@ -31,7 +31,7 @@
 
                 <div class="form-group">
                     <label for="visited_page">訪問したページ <span class="required-mark">*</span></label>
-                    <select id="visited_page" name="visited_page">
+                    <select id="visited_page" name="visited_page" required>
                         <option value="">選択してください</option>
                         @foreach(['料金ページ', '導入事例ページ', '機能紹介ページ', '資料ダウンロードページ', 'お問い合わせページ（未送信）', 'トップページ'] as $page)
                             <option value="{{ $page }}" {{ old('visited_page', $input['visited_page'] ?? '') === $page ? 'selected' : '' }}>{{ $page }}</option>
@@ -42,7 +42,7 @@
 
                 <div class="form-group">
                     <label for="phase">検討フェーズ <span class="required-mark">*</span></label>
-                    <select id="phase" name="phase">
+                    <select id="phase" name="phase" required>
                         <option value="">選択してください</option>
                         @foreach(['認知（初回訪問）', '比較検討中', '導入検討中', '失注後フォロー'] as $p)
                             <option value="{{ $p }}" {{ old('phase', $input['phase'] ?? '') === $p ? 'selected' : '' }}>{{ $p }}</option>
@@ -53,7 +53,7 @@
 
                 <div class="form-group">
                     <label for="tone">メールのトーン <span class="required-mark">*</span></label>
-                    <select id="tone" name="tone">
+                    <select id="tone" name="tone" required>
                         <option value="polite" {{ old('tone', $input['tone'] ?? 'polite') === 'polite' ? 'selected' : '' }}>丁寧（ビジネスフォーマル）</option>
                         <option value="casual" {{ old('tone', $input['tone'] ?? '') === 'casual' ? 'selected' : '' }}>カジュアル（親しみやすい）</option>
                     </select>
@@ -62,13 +62,13 @@
 
                 <div class="form-group">
                     <label for="sender_name">送信者名 <span class="required-mark">*</span></label>
-                    <input type="text" id="sender_name" name="sender_name" placeholder="例：田中 太郎" value="{{ old('sender_name', $input['sender_name'] ?? '') }}">
+                    <input type="text" id="sender_name" name="sender_name" placeholder="例：田中 太郎" value="{{ old('sender_name', $input['sender_name'] ?? '') }}" required>
                     @error('sender_name')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
                 <div class="form-group">
                     <label for="sender_company">送信者の会社名 <span class="required-mark">*</span></label>
-                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company', $input['sender_company'] ?? '') }}">
+                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company', $input['sender_company'] ?? '') }}" required>
                     @error('sender_company')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
             </div>
