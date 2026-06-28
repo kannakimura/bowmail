@@ -143,8 +143,9 @@ class GenerateMailServiceTest extends TestCase
         });
     }
 
-    // toneに未知のキーを渡したとき、任意文字列がプロンプトに混入せずconfigの先頭ラベルへフォールバックすること
-    public function test_不正なtoneキーのときデフォルトラベルがプロンプトに使われること(): void
+    // toneに未知のキーを渡したとき、任意文字列がプロンプトに混入せずpoliteラベルへフォールバックすること
+    // politeが存在しない場合のみ先頭ラベルへフォールバックするため期待値はpoliteラベルを明示参照する
+    public function test_不正なtoneキーのときpoliteラベルがプロンプトに使われること(): void
     {
         Http::fake([
             'api.anthropic.com/*' => Http::response([
