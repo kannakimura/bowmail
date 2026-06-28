@@ -19,6 +19,9 @@ class LeadImport implements ToCollection, WithHeadingRow, WithEvents
 {
     private Collection $rows;
 
+    // パース時に取得したExcelの実際のヘッダー行（日本語）を保持する
+    private array $actualHeaders = [];
+
     // BeforeImportでconfig設定値を退避しAfterImport/ImportFailedで復元する
     private string $originalFormatter;
 
@@ -54,6 +57,10 @@ class LeadImport implements ToCollection, WithHeadingRow, WithEvents
     {
         $columns = config('bulk_import.columns', []);
 
+        // 1行目からExcelの実際のヘッダー（日本語キー）を取得して列構成バリデーションに使う
+        $firstRow             = $rows->first();
+        $this->actualHeaders  = $firstRow ? $firstRow->keys()->all() : [];
+
         $this->rows = $rows->map(function ($row) use ($columns) {
             $mapped = [];
             // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
@@ -68,5 +75,12 @@ class LeadImport implements ToCollection, WithHeadingRow, WithEvents
     public function getRows(): Collection
     {
         return $this->rows;
+    }
+
+    // Excelから取得した実際のヘッダー行（日本語）を返す
+    // BulkImportServiceの列構成バリデーションで使用する
+    public function getActualHeaders(): array
+    {
+        return $this->actualHeaders;
     }
 }
