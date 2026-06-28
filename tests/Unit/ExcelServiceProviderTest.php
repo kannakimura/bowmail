@@ -24,6 +24,14 @@ class ExcelServiceProviderTest extends TestCase
         $this->assertInstanceOf(Excel::class, ExcelFacade::getFacadeRoot());
     }
 
+    // package:discoverによるグローバルエイリアス\ExcelがFacadeとして解決できること
+    public function test_グローバルエイリアスExcelがファサードとして解決できること(): void
+    {
+        // config/app.phpのaliasesに登録されグローバルに\Excel::class が使えること
+        $this->assertTrue(class_exists(\Excel::class));
+        $this->assertInstanceOf(Excel::class, \Excel::getFacadeRoot());
+    }
+
     // config/excel.phpが読み込まれトップレベルキーが存在すること
     // 空配列でのフォールスルーを防ぐためexportsキーの存在まで確認する
     public function test_excel設定ファイルが読み込まれていること(): void
