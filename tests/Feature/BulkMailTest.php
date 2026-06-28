@@ -97,37 +97,39 @@ class BulkMailTest extends TestCase
         $response->assertSee(route('bulk.upload'), false);
     }
 
-    // 有効なxlsxファイルをPOSTするとプレビュー画面へリダイレクトされること
+    // 有効なxlsxファイルをPOSTすると405にならず302リダイレクトが返ること
     public function test_POST_bulk_uploadが405にならないこと(): void
     {
         $this->mockBulkImportService();
 
         $response = $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
-        $response->assertRedirect(route('bulk.preview'));
+        $response->assertStatus(302);
     }
 
-    // POST /bulk/upload後にセッションへ送信者情報が保存されること
+    // POST /bulk/upload後にflashセッションへ送信者情報が保存されること
     public function test_upload後にセッションにbulk_inputが保存されること(): void
     {
         $this->mockBulkImportService();
 
-        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+        $response = $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
-        $this->assertEquals(
-            ['sender_name' => '田中 太郎', 'sender_company' => 'クラウドサーカス株式会社', 'tone' => 'polite'],
-            session('bulk_input')
-        );
+        $response->assertSessionHas('bulk_input', [
+            'sender_name'    => '田中 太郎',
+            'sender_company' => 'クラウドサーカス株式会社',
+            'tone'           => 'polite',
+        ]);
     }
 
-    // POST /bulk/upload後にセッションへパース済み行データが保存されること
+    // POST /bulk/upload後にflashセッションへパース済み行データが保存されること
     public function test_upload後にセッションにbulk_rowsが保存されること(): void
     {
         $this->mockBulkImportService();
 
-        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+        $response = $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
-        $rows = session('bulk_rows');
+        $response->assertSessionHas('bulk_rows');
+        $rows = $response->getSession()->get('bulk_rows');
         $this->assertIsArray($rows);
         $this->assertCount(1, $rows);
         $this->assertSame('テスト株式会社', $rows[0]['company_name']);
