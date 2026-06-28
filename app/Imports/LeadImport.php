@@ -4,39 +4,48 @@ namespace App\Imports;
 
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\BeforeImport;
+use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Events\ImportFailed;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Illuminate\Support\Collection;
 
 // ExcelのリードリストをコレクションとしてインポートするImportクラス
 // WithHeadingRowにより1行目のヘッダーをキーとして各行を連想配列で取得する
 // 列定義はconfig/bulk_import.phpで一元管理しここでは参照のみ行う
-class LeadImport implements ToCollection, WithHeadingRow
+// WithEventsでimport実行中のみformatterを切り替え副作用をimport期間に限定する
+class LeadImport implements ToCollection, WithHeadingRow, WithEvents
 {
     private Collection $rows;
 
-    // config/excel.phpのformatter設定を退避して復元に使う
+    // BeforeImportでconfig設定値を退避しAfterImport/ImportFailedで復元する
     private string $originalFormatter;
-
-    // collection()またはコンストラクタ未実行時を区別するためのフラグ
-    // trueになると__destructでの二重復元を防ぐ
-    private bool $formatterRestored = false;
 
     public function __construct()
     {
-        $this->rows = collect();
-        // config/excel.phpで設定されたformatterを退避して後で復元できるようにする
+        $this->rows              = collect();
         $this->originalFormatter = config('excel.imports.heading_row.formatter', 'slug');
-        // 日本語ヘッダーがスラッグ変換で空文字になるのを防ぐためフォーマットを無効化する
-        HeadingRowFormatter::default('none');
     }
 
-    // collection()が呼ばれなかった場合（例外・スキップ等）の保険として復元する
-    // 既にcollection()で復元済みの場合は後続処理が意図的に変えたformatterを上書きしないようスキップ
-    public function __destruct()
+    // import実行ライフサイクルのイベントハンドラを登録する
+    // BeforeImport〜AfterImport/ImportFailedの区間のみformatterを'none'にして副作用を閉じる
+    public function registerEvents(): array
     {
-        if (!$this->formatterRestored) {
-            HeadingRowFormatter::default($this->originalFormatter);
-        }
+        return [
+            // import開始時にformatterを切り替えて日本語ヘッダーのスラッグ変換を無効化する
+            BeforeImport::class => function (BeforeImport $event) {
+                HeadingRowFormatter::default('none');
+            },
+            // import正常完了時にformatterを元の設定値に戻す
+            AfterImport::class => function (AfterImport $event) {
+                HeadingRowFormatter::default($this->originalFormatter);
+            },
+            // import例外時もformatterを元の設定値に戻して後続処理への影響を閉じる
+            ImportFailed::class => function (ImportFailed $event) {
+                HeadingRowFormatter::default($this->originalFormatter);
+            },
+        ];
     }
 
     // WithHeadingRowがヘッダー行をスキップしコレクションとして渡す
@@ -45,20 +54,14 @@ class LeadImport implements ToCollection, WithHeadingRow
     {
         $columns = config('bulk_import.columns', []);
 
-        try {
-            $this->rows = $rows->map(function ($row) use ($columns) {
-                $mapped = [];
-                // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
-                foreach ($columns as $englishKey => $japaneseHeader) {
-                    $mapped[$englishKey] = $row[$japaneseHeader] ?? null;
-                }
-                return collect($mapped);
-            });
-        } finally {
-            // 例外発生時も含め必ず元のformatterに戻し後続Importへの影響を閉じる
-            HeadingRowFormatter::default($this->originalFormatter);
-            $this->formatterRestored = true;
-        }
+        $this->rows = $rows->map(function ($row) use ($columns) {
+            $mapped = [];
+            // 期待列のみ抽出することで想定外の列が英語キーに混入しないようにする
+            foreach ($columns as $englishKey => $japaneseHeader) {
+                $mapped[$englishKey] = $row[$japaneseHeader] ?? null;
+            }
+            return collect($mapped);
+        });
     }
 
     // パース済みの全行を英語キーのコレクションとして返す
