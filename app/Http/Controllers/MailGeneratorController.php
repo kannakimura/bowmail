@@ -89,9 +89,15 @@ PROMPT;
             return back()->withInput()->withErrors(['api' => 'メール生成に失敗しました。しばらくしてから再度お試しください。']);
         }
 
-        // レスポンスのテキストから件名と本文を正規表現で取り出す
+        // レスポンスのテキストを取得する
         $text = $response->json('content.0.text');
 
+        // content.0.textがnullや文字列以外だった場合はエラーとして扱う
+        if (!is_string($text) || $text === '') {
+            return back()->withInput()->withErrors(['api' => 'AIからの応答が不正でした。しばらくしてから再度お試しください。']);
+        }
+
+        // 件名と本文を正規表現で取り出す
         preg_match('/件名：(.+)/u', $text, $subjectMatch);
         preg_match('/本文：\s*([\s\S]+)/u', $text, $bodyMatch);
 
