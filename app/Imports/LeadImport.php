@@ -9,17 +9,9 @@ use Illuminate\Support\Collection;
 
 // ExcelのリードリストをコレクションとしてインポートするImportクラス
 // WithHeadingRowにより1行目のヘッダーをキーとして各行を連想配列で取得する
+// 列定義はconfig/bulk_import.phpで一元管理しここでは参照のみ行う
 class LeadImport implements ToCollection, WithHeadingRow
 {
-    // 期待する列のヘッダー名（Excelの1行目と一致する必要がある）
-    // キー：PHPで使う英語キー / 値：Excelの日本語ヘッダー名
-    public const COLUMNS = [
-        'company_name'  => '会社名',
-        'email'         => 'メールアドレス',
-        'visited_page'  => '訪問ページ',
-        'phase'         => 'フェーズ',
-    ];
-
     private Collection $rows;
 
     public function __construct()
@@ -30,16 +22,17 @@ class LeadImport implements ToCollection, WithHeadingRow
     }
 
     // WithHeadingRowがヘッダー行をスキップしコレクションとして渡す
-    // 日本語ヘッダーキーをCOLUMNS定数の英語キーにリマップして格納する
+    // 日本語ヘッダーキーをconfig/bulk_import.phpの英語キーにリマップして格納する
     public function collection(Collection $rows): void
     {
-        $flip = array_flip(self::COLUMNS);
+        $columns = config('bulk_import.columns', []);
+        $flip    = array_flip($columns);
 
         $this->rows = $rows->map(function ($row) use ($flip) {
             $mapped = [];
             foreach ($row as $header => $value) {
-                $key           = $flip[$header] ?? $header;
-                $mapped[$key]  = $value;
+                $key          = $flip[$header] ?? $header;
+                $mapped[$key] = $value;
             }
             return collect($mapped);
         });
