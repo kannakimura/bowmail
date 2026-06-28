@@ -376,7 +376,7 @@ class BulkMailTest extends TestCase
         $this->mock(BulkImportService::class, function ($mock) {
             $mock->shouldReceive('parse')
                 ->once()
-                ->andThrow(new \App\Exceptions\InvalidColumnException(['email']));
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
         $response = $this->from(route('bulk'))
@@ -393,7 +393,7 @@ class BulkMailTest extends TestCase
         $this->mock(BulkImportService::class, function ($mock) {
             $mock->shouldReceive('parse')
                 ->once()
-                ->andThrow(new \App\Exceptions\InvalidColumnException(['email']));
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
         $response = $this->from(route('bulk'))
@@ -413,7 +413,7 @@ class BulkMailTest extends TestCase
         $this->mock(BulkImportService::class, function ($mock) {
             $mock->shouldReceive('parse')
                 ->once()
-                ->andThrow(new \App\Exceptions\InvalidColumnException(['email']));
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
         $this->from(route('bulk'))
