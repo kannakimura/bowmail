@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 // 一括メール生成アップロードのバリデーションを担当するFormRequest
 class BulkUploadRequest extends FormRequest
@@ -19,9 +20,10 @@ class BulkUploadRequest extends FormRequest
             // xlsxのみ許可・最大5MB・必須
             'file'           => ['required', 'file', 'mimes:xlsx', 'max:5120'],
             // 送信者情報・トーンはUIと同様に必須・GenerateMailRequestと同じ制約を適用する
+            // toneはconfig/mail_options.phpのtonesキーをRule::in()で参照しハードコードを避ける
             'sender_name'    => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
             'sender_company' => ['required', 'string', 'max:100', 'not_regex:/[\r\n]/'],
-            'tone'           => ['required', 'in:polite,casual'],
+            'tone'           => ['required', Rule::in(array_keys(config('mail_options.tones', [])))],
         ];
     }
 }
