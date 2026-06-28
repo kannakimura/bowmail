@@ -49,6 +49,9 @@ class BulkImportServiceTest extends TestCase
         $result  = $this->service->parse($this->validFile);
         $columns = config('bulk_import.columns', []);
 
+        // configが空だとforeachが回らず常にパスしてしまうため先にアサートする
+        $this->assertNotEmpty($columns, 'bulk_import.columnsが空のためキー検証が無効です');
+
         foreach ($result as $row) {
             foreach (array_keys($columns) as $key) {
                 $this->assertArrayHasKey($key, $row->toArray(), "{$key}キーがありません");
