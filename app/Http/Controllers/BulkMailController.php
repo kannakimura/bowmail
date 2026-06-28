@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkUploadRequest;
 use App\Services\BulkImportService;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 // 一括メール生成機能のコントローラー
 // Excel アップロード → プレビュー → 一括生成 → Excel ダウンロードの流れを担当する
@@ -19,11 +21,21 @@ class BulkMailController extends Controller
 
     // ExcelをBulkImportService経由でパースしてフラッシュセッションでプレビュー画面へリダイレクトする
     // redirect()->with()でflash保存することでPRGパターンを正しく実現し直アクセス時に過去データが残らない
+    // パース失敗時はアップロード画面へ戻してエラーを表示する
     public function upload(BulkUploadRequest $request)
     {
-        $rows = $this->bulkImportService->parse(
-            $request->file('file')->getPathname()
-        );
+        try {
+            $rows = $this->bulkImportService->parse(
+                $request->file('file')->getPathname()
+            );
+        } catch (Throwable $e) {
+            // ファイル破損・xlsx偽装等のパースエラーはログに記録してユーザーに安全なメッセージを返す
+            Log::error('Excelパース失敗', ['message' => $e->getMessage()]);
+
+            return back()
+                ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
+                ->withErrors(['file' => 'ファイルの読み込みに失敗しました。破損していないxlsxファイルをアップロードしてください。']);
+        }
 
         return redirect()->route('bulk.preview')->with([
             'bulk_input' => $request->safe()->only(['sender_name', 'sender_company', 'tone']),
