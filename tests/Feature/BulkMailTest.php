@@ -379,8 +379,10 @@ class BulkMailTest extends TestCase
                 ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
+        // back()のリダイレクト先をbulkに確定するためfrom()を設定したうえでカウンタ方式のIPを使う
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
         $response = $this->from(route('bulk'))
-            ->withServerVariables(['REMOTE_ADDR' => '192.168.2.1'])
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
             ->post(route('bulk.upload'), $this->validPayload());
 
         $response->assertRedirect(route('bulk'));
@@ -396,8 +398,10 @@ class BulkMailTest extends TestCase
                 ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
+        // from()とfollowingRedirects()との組み合わせのためpostWithUniqueIp()を使わずカウンタ方式で一意なIPを生成する
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
         $response = $this->from(route('bulk'))
-            ->withServerVariables(['REMOTE_ADDR' => '192.168.2.2'])
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
             ->followingRedirects()
             ->post(route('bulk.upload'), $this->validPayload());
 
@@ -416,9 +420,7 @@ class BulkMailTest extends TestCase
                 ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
         });
 
-        $this->from(route('bulk'))
-            ->withServerVariables(['REMOTE_ADDR' => '192.168.2.3'])
-            ->post(route('bulk.upload'), $this->validPayload());
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
     }
 
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
