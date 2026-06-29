@@ -80,11 +80,12 @@ class BulkMailController extends Controller
         return redirect()->route('bulk.result')->with('bulk_results', $results->toArray());
     }
 
-    // 一括生成結果を表示する（Phase 2-5で実装）
+    // 一括生成結果をセッションから受け取り結果画面を表示する
     public function result()
     {
-        // TODO: bulk_resultsをセッションから取り出して結果画面を表示する
-        abort(501, '未実装');
+        $results = session('bulk_results', []);
+
+        return view('bulk-result', compact('results'));
     }
 
     // セッションからパース済みデータを受け取りプレビュー画面を表示する
