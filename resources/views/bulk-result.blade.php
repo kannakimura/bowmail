@@ -29,6 +29,8 @@
             <h2>生成結果</h2>
             <p class="row-count">{{ count($results) }} 件のメールを生成しました</p>
 
+            <a href="{{ route('bulk.download') }}" class="btn btn-primary">Excelダウンロード</a>
+
             @foreach ($results as $index => $result)
                 <div class="result-item">
                     <p class="result-label"># {{ $index + 1 }}</p>
