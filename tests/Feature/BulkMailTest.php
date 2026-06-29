@@ -568,9 +568,22 @@ class BulkMailTest extends TestCase
     }
 
     // POST /bulk/generate ルートが存在すること（501を返すスタブ）
-    public function test_一括生成ルートが存在すること(): void
+    // セッションなしで一括生成POSTするとsessionエラーが返ること
+    public function test_セッションなしで一括生成するとバリデーションエラーが返ること(): void
     {
-        // Phase 2-2実装前はスタブとして501を返す
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertSessionHasErrors(['session']);
+    }
+
+    // セッションありで一括生成POSTすると処理が進むこと（スタブのため501）
+    public function test_セッションありで一括生成すると処理が進むこと(): void
+    {
+        $this->withSession([
+            'bulk_rows'  => [['company_name' => 'テスト株式会社', 'email' => 'test@example.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中']],
+            'bulk_input' => ['sender_name' => '田中 太郎', 'sender_company' => 'クラウドサーカス株式会社', 'tone' => 'polite'],
+        ]);
+
+        // Phase 2-4実装前はスタブとして501を返す
         $this->postWithUniqueIp(route('bulk.generate'))->assertStatus(501);
     }
 
