@@ -96,9 +96,12 @@ class BulkMailController extends Controller
     }
 
     // 一括生成結果をセッションから受け取り結果画面を表示する
+    // bulk_resultsはflashセッションのため次リクエストで消えるが、ダウンロードでも使うためkeepで延命する
     public function result()
     {
         $results = session('bulk_results', []);
+
+        session()->keep(['bulk_results']);
 
         return view('bulk-result', compact('results'));
     }
