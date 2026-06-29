@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Exceptions\EmptyRowsException;
 use App\Exceptions\TooManyRowsException;
+use App\Services\BulkGenerateService;
 use App\Services\BulkImportService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -588,14 +589,39 @@ class BulkMailTest extends TestCase
     {
         // upload → preview → generate の実フローでflashデータがkeepされることを検証する
         $this->mockBulkImportService();
+        $this->mock(BulkGenerateService::class, function ($mock) {
+            $mock->shouldReceive('generateAll')->once()->andReturn(collect([
+                ['subject' => '件名', 'body' => '本文'],
+            ]));
+        });
+
         $this->from(route('bulk'));
         $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
         // previewでkeepされることでflashデータが次リクエストまで延命する
         $this->get(route('bulk.preview'));
 
-        // Phase 2-4実装前はスタブとして501を返す（バリデーションエラーにならず処理が進むことを確認）
-        $this->postWithUniqueIp(route('bulk.generate'))->assertStatus(501);
+        // バリデーションエラーにならず生成処理が実行されbulk.resultへリダイレクトされること
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertRedirect(route('bulk.result'));
+    }
+
+    // 一括生成成功時にbulk_resultsがセッションに保存されること
+    public function test_一括生成成功時にbulk_resultsがセッションに保存されること(): void
+    {
+        $this->mockBulkImportService();
+        $this->mock(BulkGenerateService::class, function ($mock) {
+            $mock->shouldReceive('generateAll')->once()->andReturn(collect([
+                ['subject' => '件名', 'body' => '本文'],
+            ]));
+        });
+
+        $this->from(route('bulk'));
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+        $this->get(route('bulk.preview'));
+
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertSessionHas('bulk_results');
     }
 
     // 必須フィールドにrequired属性とaccept属性が付いていること
