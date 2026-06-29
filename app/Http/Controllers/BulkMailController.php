@@ -83,7 +83,7 @@ class BulkMailController extends Controller
     // 生成結果をExcelファイルとしてダウンロードする（Phase 3-3で実装）
     public function download()
     {
-        // TODO: BulkExportServiceを呼び出して.xlsxファイルを返す
+        // Phase 3-3でBulkExportServiceを呼び出して.xlsxファイルを返す実装に差し替える
         abort(501, '未実装');
     }
 
