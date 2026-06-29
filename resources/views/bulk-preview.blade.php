@@ -70,7 +70,7 @@
 
             <div class="btn-row">
                 <a href="{{ route('bulk') }}" class="btn btn--gray">やり直す</a>
-                {{-- セッションのリードデータをそのままPOSTで送信し生成処理へ渡す --}}
+                {{-- POSTでgenerate処理を起動しサーバー側でセッションのリードデータを参照して生成へ進む --}}
                 <form method="POST" action="{{ route('bulk.generate') }}">
                     @csrf
                     <button type="submit" class="btn btn--primary">一括生成する</button>
