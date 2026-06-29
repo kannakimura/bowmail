@@ -662,6 +662,14 @@ class BulkMailTest extends TestCase
         $response->assertSee('AIサーバーに接続できませんでした。');
     }
 
+    // ダウンロードルートのスタブ確認（Phase 3-3実装前は501を返す）
+    // GET /bulk/download ルートが存在すること
+    public function test_ダウンロードルートが存在すること(): void
+    {
+        // Phase 3-3実装前はスタブとして501を返す
+        $this->get(route('bulk.download'))->assertStatus(501);
+    }
+
     // 必須フィールドにrequired属性とaccept属性が付いていること
     // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
