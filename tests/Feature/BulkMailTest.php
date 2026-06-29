@@ -543,6 +543,55 @@ class BulkMailTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/<[^>]+style=(?:"[^"]*"|\'[^\']*\')[^>]*>/', $html);
     }
 
+    // プレビュー画面に一括生成ボタンが表示されること
+    public function test_プレビュー画面に一括生成ボタンが表示されること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')->once()->andReturn(collect([
+                collect(['company_name' => 'テスト株式会社', 'email' => 'test@example.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中']),
+            ]));
+        });
+
+        $ip = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response = $this->get(route('bulk.preview'));
+        $response->assertStatus(200);
+        $response->assertSee('一括生成する');
+    }
+
+    // プレビュー画面の一括生成フォームがbulk.generateへPOSTすること
+    public function test_プレビュー画面の一括生成フォームが正しいactionを持つこと(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')->once()->andReturn(collect([
+                collect(['company_name' => 'テスト株式会社', 'email' => 'test@example.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中']),
+            ]));
+        });
+
+        $ip = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response = $this->get(route('bulk.preview'));
+        // action属性にbulk.generateのURLが含まれること
+        $response->assertSee('action="' . route('bulk.generate') . '"', false);
+    }
+
+    // POST /bulk/generate ルートが存在すること（501を返すスタブ）
+    public function test_一括生成ルートが存在すること(): void
+    {
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.generate'));
+
+        // Phase 2-2実装前はスタブとして501を返す
+        $response->assertStatus(501);
+    }
+
     // 必須フィールドにrequired属性とaccept属性が付いていること
     // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
