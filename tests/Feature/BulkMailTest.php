@@ -735,10 +735,16 @@ class BulkMailTest extends TestCase
         $response = $this->withSession(['bulk_results' => $results])
             ->get(route('bulk.download'));
 
-        // Content-Typeにxlsx MIMEタイプが含まれること
+        // リダイレクト等に変わった場合に原因を切り分けやすくするため先に200を確認する
+        $response->assertOk();
+
+        // Content-TypeがnullのままassertStringContainsStringに渡るとTypeErrorになるため
+        // assertNotNullで先にガードしてからMIMEタイプを検証する
+        $contentType = $response->headers->get('Content-Type');
+        $this->assertNotNull($contentType, 'Content-Typeヘッダーが設定されていません');
         $this->assertStringContainsString(
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            $response->headers->get('Content-Type')
+            $contentType
         );
     }
 
@@ -753,10 +759,26 @@ class BulkMailTest extends TestCase
         $response = $this->withSession(['bulk_results' => $results])
             ->get(route('bulk.download'));
 
-        // BinaryFileResponseからファイルパスを取得してPhpSpreadsheetで直接読み込む
-        $filePath = $response->baseResponse->getFile()->getPathname();
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        // リダイレクト等に変わった場合に原因を切り分けやすくするため先に200を確認する
+        $response->assertOk();
+
+        // BinaryFileResponse以外に変わった場合にgetFile()で落ちる前に型をアサートして原因を明示する
+        $this->assertInstanceOf(
+            \Symfony\Component\HttpFoundation\BinaryFileResponse::class,
+            $response->baseResponse,
+            'レスポンスがBinaryFileResponseではないためファイルパスを取得できません'
+        );
+
+        // ファイルが存在することを確認してからPhpSpreadsheetで読み込む
+        $file = $response->baseResponse->getFile();
+        $this->assertFileExists($file->getPathname());
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
         $actualHeaders = $spreadsheet->getActiveSheet()->toArray()[0];
+
+        // メモリを解放してテスト間の干渉を防ぐ
+        $spreadsheet->disconnectWorksheets();
+        unset($spreadsheet);
 
         $expectedHeaders = array_values(config('bulk_export.columns', []));
         $this->assertNotEmpty($expectedHeaders, 'bulk_export.columnsが空のためヘッダー検証が無効です');
