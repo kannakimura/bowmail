@@ -68,8 +68,9 @@ class BulkMailController extends Controller
     }
 
     // プレビュー確認後にセッションのリードデータでClaude APIを順次呼び出してメールを一括生成する
-    // BulkGenerateRequestでセッション存在チェックを行い切れていればバリデーションエラーを返す
+    // BulkGenerateRequestでセッション存在チェックを行い、セッション切れの場合はバリデーションエラーを返す
     // 生成結果をflashセッションに保存してPRGパターンで結果画面へリダイレクトする
+    // 件数が多い場合はセッション容量・書き込み負荷が増大するため、将来的にはcache/DBテーブルへの保存とIDセッション管理への移行を検討すること
     public function generate(BulkGenerateRequest $request)
     {
         $rows    = session('bulk_rows', []);
