@@ -624,6 +624,44 @@ class BulkMailTest extends TestCase
             ->assertSessionHas('bulk_results');
     }
 
+    // 一括生成結果画面のテスト
+    // 結果セッションありで結果画面にアクセスすると200で件名・本文が表示されること
+    public function test_結果画面にアクセスすると生成結果が表示されること(): void
+    {
+        $this->withSession([
+            'bulk_results' => [
+                ['subject' => 'テスト件名', 'body' => 'テスト本文'],
+            ],
+        ]);
+
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('テスト件名');
+        $response->assertSee('テスト本文');
+    }
+
+    // 結果セッションなしで結果画面に直アクセスすると空状態のメッセージが表示されること
+    public function test_結果セッションなしで結果画面にアクセスすると空状態が表示されること(): void
+    {
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('表示する生成結果がありません');
+    }
+
+    // API失敗行のエラーメッセージが結果画面に表示されること
+    public function test_API失敗行のエラーメッセージが結果画面に表示されること(): void
+    {
+        $this->withSession([
+            'bulk_results' => [
+                ['error' => 'AIサーバーに接続できませんでした。'],
+            ],
+        ]);
+
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('AIサーバーに接続できませんでした。');
+    }
+
     // 必須フィールドにrequired属性とaccept属性が付いていること
     // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
