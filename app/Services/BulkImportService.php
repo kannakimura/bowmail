@@ -57,6 +57,8 @@ class BulkImportService
 
     // パース済み行の件数が0件または上限超過の場合に例外を投げる
     // 上限件数はconfig/bulk_import.phpのmax_rowsで管理する
+    // 現状はExcel::import()完了後（全行メモリ展開後）に検証するため上限超過でも読み込みコストは発生する
+    // 負荷が問題になる場合はWithChunkReadingとカウンタで上限+1行目で打ち切る実装を検討すること
     private function validateRowCount(Collection $rows): void
     {
         $count = $rows->count();
