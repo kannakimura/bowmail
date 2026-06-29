@@ -78,7 +78,7 @@
 
                 <div class="form-group">
                     <label for="sender_company">送信者の会社名 <span class="required-mark">*</span></label>
-                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company', $input['sender_company'] ?? '') }}" required>
+                    <input type="text" id="sender_company" name="sender_company" placeholder="例：テスト株式会社" value="{{ old('sender_company', $input['sender_company'] ?? '') }}" required>
                     @error('sender_company')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
             </div>
