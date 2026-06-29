@@ -32,6 +32,9 @@ Route::post('/bulk/generate', [BulkMailController::class, 'generate'])
 // PRGパターンのGETエンドポイント：一括生成成功後にリダイレクトされる結果画面
 Route::get('/bulk/result', [BulkMailController::class, 'result'])->name('bulk.result');
 
+// 生成結果をExcelファイルとしてダウンロードするエンドポイント
+Route::get('/bulk/download', [BulkMailController::class, 'download'])->name('bulk.download');
+
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
 // セッションのflashデータから生成結果を受け取って表示する
 Route::get('/result', [MailGeneratorController::class, 'result'])->name('generate.result');
