@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\EmptyRowsException;
 use App\Exceptions\InvalidColumnException;
 use App\Exceptions\TooManyRowsException;
+use App\Http\Requests\BulkGenerateRequest;
 use App\Http\Requests\BulkUploadRequest;
 use App\Services\BulkImportService;
 use Illuminate\Support\Facades\Log;
@@ -62,8 +63,9 @@ class BulkMailController extends Controller
         ]);
     }
 
-    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-2以降で実装）
-    public function generate()
+    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-4以降で実装）
+    // BulkGenerateRequestでセッション存在チェックを行い切れていればバリデーションエラーを返す
+    public function generate(BulkGenerateRequest $request)
     {
         // TODO: BulkGenerateServiceを呼び出してメールを一括生成する
         abort(501, '未実装');
