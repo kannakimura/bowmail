@@ -29,7 +29,7 @@ Route::post('/bulk/generate', [BulkMailController::class, 'generate'])
     ->name('bulk.generate')
     ->middleware('throttle:5,1');
 
-// PRGパターンのGETエンドポイント：一括生成成功後にリダイレクトされる結果画面（Phase 2-5で実装）
+// PRGパターンのGETエンドポイント：一括生成成功後にリダイレクトされる結果画面
 Route::get('/bulk/result', [BulkMailController::class, 'result'])->name('bulk.result');
 
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
