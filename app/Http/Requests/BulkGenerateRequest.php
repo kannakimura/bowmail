@@ -7,8 +7,12 @@ use Illuminate\Validation\Validator;
 
 // 一括生成実行リクエストのバリデーションを担当するFormRequest
 // フォーム入力値はCSRFトークンのみのためrulesは空・セッション存在チェックをwithValidatorで行う
+// バリデーション失敗時はアップロード画面へ戻して再アップロードを促す（プレビュー画面は$errorsを表示しないため）
 class BulkGenerateRequest extends FormRequest
 {
+    // バリデーション失敗時のリダイレクト先をアップロード画面に固定する
+    protected $redirectRoute = 'bulk';
+
     // 認可チェック：このアプリは認証不要のため常にtrueを返す
     public function authorize(): bool
     {
