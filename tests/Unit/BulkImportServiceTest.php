@@ -107,8 +107,11 @@ class BulkImportServiceTest extends TestCase
     {
         $this->expectException(TooManyRowsException::class);
 
-        // leads_over_limit.xlsxはmax_rows(500)を超える501行を持つフィクスチャ
-        $this->service->parse(base_path('tests/fixtures/leads_over_limit.xlsx'));
+        // max_rowsをleads_valid.xlsxの行数(2)より小さい1に下げて上限超過を再現する
+        // フィクスチャ行数ではなくconfigで閾値を制御することで設定変更への追従を容易にする
+        config(['bulk_import.max_rows' => 1]);
+
+        $this->service->parse($this->validFile);
     }
 
     // TooManyRowsExceptionから件数と上限を取得できること
