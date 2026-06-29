@@ -5,12 +5,15 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\StringValueBinder;
 use Illuminate\Support\Collection;
 
 // 一括生成結果をExcelファイルとしてエクスポートするExportクラス
 // 列定義はconfig/bulk_export.phpで一元管理しここでは参照のみ行う
 // WithHeadingsで1行目にヘッダーを出力し、WithMappingでconfig定義順に列を並べる
-class LeadResultExport implements FromCollection, WithHeadings, WithMapping
+// WithCustomValueBinder+StringValueBinderで全セルを文字列として扱いExcel数式インジェクションを防ぐ
+class LeadResultExport extends StringValueBinder implements FromCollection, WithHeadings, WithMapping, WithCustomValueBinder
 {
     public function __construct(private readonly array $rows) {}
 
