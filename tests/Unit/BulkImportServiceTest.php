@@ -44,7 +44,8 @@ class BulkImportServiceTest extends TestCase
         try {
             $result = $this->service->parse($tmpPath);
             $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
-            $this->assertNotEmpty($result);
+            // assertNotEmptyはCollectionオブジェクトに対して常にパスするため件数で明示的に検証する
+            $this->assertGreaterThan(0, $result->count(), 'パース結果が0件です');
         } finally {
             // tempnamがfalseの場合はunlinkでTypeErrorになるため文字列の場合のみ削除する
             if (is_string($tmpPath)) {
