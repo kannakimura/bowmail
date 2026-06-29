@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Exceptions\EmptyRowsException;
 use App\Exceptions\TooManyRowsException;
+use App\Services\BulkExportService;
 use App\Services\BulkGenerateService;
 use App\Services\BulkImportService;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -662,12 +664,31 @@ class BulkMailTest extends TestCase
         $response->assertSee('AIサーバーに接続できませんでした。');
     }
 
-    // ダウンロードルートのスタブ確認（Phase 3-3実装前は501を返す）
-    // GET /bulk/download ルートが存在すること
-    public function test_ダウンロードルートが存在すること(): void
+    // セッションなしでダウンロードするとアップロード画面へリダイレクトされること
+    public function test_セッションなしでダウンロードするとアップロード画面へリダイレクトされること(): void
     {
-        // Phase 3-3実装前はスタブとして501を返す
-        $this->get(route('bulk.download'))->assertStatus(501);
+        $this->get(route('bulk.download'))->assertRedirect(route('bulk'));
+    }
+
+    // セッションに結果がある場合にxlsxダウンロードレスポンスが返ること
+    public function test_セッションあり時にダウンロードするとxlsxが返ること(): void
+    {
+        Excel::fake();
+
+        // BulkExportServiceをモックしてExcel::downloadが呼ばれたことを検証する
+        $this->mock(BulkExportService::class, function ($mock) {
+            $mock->shouldReceive('export')->once()->andReturn(
+                Excel::download(new \App\Exports\LeadResultExport([]), 'bowmail_results.xlsx')
+            );
+        });
+
+        $this->withSession([
+            'bulk_results' => [
+                ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+            ],
+        ])->get(route('bulk.download'));
+
+        Excel::assertDownloaded('bowmail_results.xlsx');
     }
 
     // 必須フィールドにrequired属性とaccept属性が付いていること
