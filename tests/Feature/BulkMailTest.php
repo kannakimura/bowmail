@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\EmptyRowsException;
+use App\Exceptions\TooManyRowsException;
 use App\Services\BulkImportService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -421,6 +423,90 @@ class BulkMailTest extends TestCase
         });
 
         $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+    }
+
+    // データ行0件のExcelをアップロードするとfileエラーが返ること
+    public function test_データ行0件のExcelをアップロードするとfileエラーが返ること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')->once()->andThrow(new EmptyRowsException());
+        });
+
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertRedirect(route('bulk'));
+        $response->assertSessionHasErrors(['file']);
+    }
+
+    // データ行0件のエラーメッセージがビューに表示されること
+    public function test_データ行0件のエラーメッセージがビューに表示されること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')->once()->andThrow(new EmptyRowsException());
+        });
+
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->followingRedirects()
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertStatus(200);
+        $response->assertSee('データが1件もありません');
+    }
+
+    // 上限件数超過のExcelをアップロードするとfileエラーが返ること
+    public function test_上限件数超過のExcelをアップロードするとfileエラーが返ること(): void
+    {
+        $limit = config('bulk_import.max_rows', 500);
+        $this->mock(BulkImportService::class, function ($mock) use ($limit) {
+            $mock->shouldReceive('parse')->once()->andThrow(new TooManyRowsException($limit + 1, $limit));
+        });
+
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertRedirect(route('bulk'));
+        $response->assertSessionHasErrors(['file']);
+    }
+
+    // 上限件数超過のエラーメッセージがビューに表示されること
+    public function test_上限件数超過のエラーメッセージがビューに表示されること(): void
+    {
+        $limit = config('bulk_import.max_rows', 500);
+        $this->mock(BulkImportService::class, function ($mock) use ($limit) {
+            $mock->shouldReceive('parse')->once()->andThrow(new TooManyRowsException($limit + 1, $limit));
+        });
+
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->followingRedirects()
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertStatus(200);
+        // 上限件数はconfigから取得してハードコードを避ける
+        $response->assertSee("一度にアップロードできるリードは{$limit}件まで");
+    }
+
+    // プレビュー画面に「N件のリードを読み込みました」が表示されること
+    public function test_プレビュー画面に件数表示が含まれること(): void
+    {
+        $response = $this->withSession([
+            'bulk_input' => ['sender_name' => 'テスト', 'sender_company' => 'テスト社', 'tone' => 'polite'],
+            'bulk_rows'  => [
+                ['company_name' => 'A社', 'email' => 'a@a.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中'],
+                ['company_name' => 'B社', 'email' => 'b@b.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中'],
+            ],
+        ])->get(route('bulk.preview'));
+
+        $response->assertStatus(200);
+        $response->assertSee('2 件のリードを読み込みました');
     }
 
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
