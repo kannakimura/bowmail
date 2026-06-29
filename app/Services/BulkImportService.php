@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\EmptyRowsException;
 use App\Exceptions\InvalidColumnException;
+use App\Exceptions\TooManyRowsException;
 use App\Imports\LeadImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
@@ -22,8 +24,11 @@ class BulkImportService
 
         $import = new LeadImport();
         Excel::import($import, $filePath);
+        $rows = $import->getRows();
 
-        return $import->getRows();
+        $this->validateRowCount($rows);
+
+        return $rows;
     }
 
     // HeadingRowImportでExcelの1行目を直接読み取り必須列を検証する
@@ -47,6 +52,23 @@ class BulkImportService
 
         if (!empty($missingColumns)) {
             throw new InvalidColumnException($missingColumns);
+        }
+    }
+
+    // パース済み行の件数が0件または上限超過の場合に例外を投げる
+    // 上限件数はconfig/bulk_import.phpのmax_rowsで管理する
+    private function validateRowCount(Collection $rows): void
+    {
+        $count = $rows->count();
+
+        if ($count === 0) {
+            throw new EmptyRowsException();
+        }
+
+        $limit = config('bulk_import.max_rows', 500);
+
+        if ($count > $limit) {
+            throw new TooManyRowsException($count, $limit);
         }
     }
 }
