@@ -567,7 +567,8 @@ class BulkMailTest extends TestCase
         $response->assertSee('action="' . route('bulk.generate') . '"', false);
     }
 
-    // POST /bulk/generate ルートが存在すること（501を返すスタブ）
+    // 一括生成のセッション存在チェック：セッションなし時はバリデーションエラーでアップロード画面へ戻る
+    // セッションあり時（実フロー）はgenerate()まで到達する（Phase 2-4実装前はスタブとして501を返す）
     // セッションなしで一括生成POSTするとsessionエラーが返ること
     public function test_セッションなしで一括生成するとバリデーションエラーが返ること(): void
     {
