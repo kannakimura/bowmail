@@ -780,6 +780,9 @@ class BulkMailTest extends TestCase
         $spreadsheet->disconnectWorksheets();
         unset($spreadsheet);
 
+        // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+        @unlink($file->getPathname());
+
         $expectedHeaders = array_values(config('bulk_export.columns', []));
         $this->assertNotEmpty($expectedHeaders, 'bulk_export.columnsが空のためヘッダー検証が無効です');
         $this->assertSame($expectedHeaders, $actualHeaders);
