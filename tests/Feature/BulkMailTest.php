@@ -738,19 +738,25 @@ class BulkMailTest extends TestCase
         // リダイレクト等に変わった場合に原因を切り分けやすくするため先に200を確認する
         $response->assertOk();
 
-        // Content-TypeがnullのままassertStringContainsStringに渡るとTypeErrorになるため
-        // assertNotNullで先にガードしてからMIMEタイプを検証する
-        $contentType = $response->headers->get('Content-Type');
-        $this->assertNotNull($contentType, 'Content-Typeヘッダーが設定されていません');
-        $this->assertStringContainsString(
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            $contentType
-        );
+        // アサーション失敗時でも確実にクリーンアップされるようファイルパスを先に退避してfinallyで削除する
+        $tmpPath = ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse)
+            ? $response->baseResponse->getFile()->getPathname()
+            : null;
 
-        // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
-        // 実装変更でBinaryFileResponse以外になった場合は削除をスキップする
-        if ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
-            @unlink($response->baseResponse->getFile()->getPathname());
+        try {
+            // Content-TypeがnullのままassertStringContainsStringに渡るとTypeErrorになるため
+            // assertNotNullで先にガードしてからMIMEタイプを検証する
+            $contentType = $response->headers->get('Content-Type');
+            $this->assertNotNull($contentType, 'Content-Typeヘッダーが設定されていません');
+            $this->assertStringContainsString(
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                $contentType
+            );
+        } finally {
+            // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+            if ($tmpPath !== null) {
+                @unlink($tmpPath);
+            }
         }
     }
 

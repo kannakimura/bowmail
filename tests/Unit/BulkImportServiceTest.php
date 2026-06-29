@@ -30,6 +30,24 @@ class BulkImportServiceTest extends TestCase
         parent::tearDown();
     }
 
+    // 拡張子なしの一時ファイルでもパースできること
+    // Laravelのアップロード一時ファイルは拡張子なしのため自動検出が失敗するが
+    // readerTypeにXLSXを明示することで正常にパースできることを回帰検知する
+    public function test_拡張子なし一時ファイルでもパースできること(): void
+    {
+        // フィクスチャを拡張子なし一時ファイルにコピーしてアップロード時と同じ状況を再現する
+        $tmpPath = tempnam(sys_get_temp_dir(), 'bowmail_test_');
+        copy($this->validFile, $tmpPath);
+
+        try {
+            $result = $this->service->parse($tmpPath);
+            $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
+            $this->assertNotEmpty($result);
+        } finally {
+            @unlink($tmpPath);
+        }
+    }
+
     // 有効なExcelファイルをパースするとCollectionが返ること
     public function test_有効なExcelをパースするとCollectionが返ること(): void
     {
