@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Exceptions\EmptyRowsException;
 use App\Exceptions\TooManyRowsException;
+use App\Services\BulkGenerateService;
 use App\Services\BulkImportService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -588,14 +589,77 @@ class BulkMailTest extends TestCase
     {
         // upload → preview → generate の実フローでflashデータがkeepされることを検証する
         $this->mockBulkImportService();
+        $this->mock(BulkGenerateService::class, function ($mock) {
+            $mock->shouldReceive('generateAll')->once()->andReturn(collect([
+                ['subject' => '件名', 'body' => '本文'],
+            ]));
+        });
+
         $this->from(route('bulk'));
         $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
         // previewでkeepされることでflashデータが次リクエストまで延命する
         $this->get(route('bulk.preview'));
 
-        // Phase 2-4実装前はスタブとして501を返す（バリデーションエラーにならず処理が進むことを確認）
-        $this->postWithUniqueIp(route('bulk.generate'))->assertStatus(501);
+        // バリデーションエラーにならず生成処理が実行されbulk.resultへリダイレクトされること
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertRedirect(route('bulk.result'));
+    }
+
+    // 一括生成成功時にbulk_resultsがセッションに保存されること
+    public function test_一括生成成功時にbulk_resultsがセッションに保存されること(): void
+    {
+        $this->mockBulkImportService();
+        $this->mock(BulkGenerateService::class, function ($mock) {
+            $mock->shouldReceive('generateAll')->once()->andReturn(collect([
+                ['subject' => '件名', 'body' => '本文'],
+            ]));
+        });
+
+        $this->from(route('bulk'));
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+        $this->get(route('bulk.preview'));
+
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertSessionHas('bulk_results');
+    }
+
+    // 一括生成結果画面のテスト
+    // 結果セッションありで結果画面にアクセスすると200で件名・本文が表示されること
+    public function test_結果画面にアクセスすると生成結果が表示されること(): void
+    {
+        $this->withSession([
+            'bulk_results' => [
+                ['subject' => 'テスト件名', 'body' => 'テスト本文'],
+            ],
+        ]);
+
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('テスト件名');
+        $response->assertSee('テスト本文');
+    }
+
+    // 結果セッションなしで結果画面に直アクセスすると空状態のメッセージが表示されること
+    public function test_結果セッションなしで結果画面にアクセスすると空状態が表示されること(): void
+    {
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('表示する生成結果がありません');
+    }
+
+    // API失敗行のエラーメッセージが結果画面に表示されること
+    public function test_API失敗行のエラーメッセージが結果画面に表示されること(): void
+    {
+        $this->withSession([
+            'bulk_results' => [
+                ['error' => 'AIサーバーに接続できませんでした。'],
+            ],
+        ]);
+
+        $response = $this->get(route('bulk.result'));
+        $response->assertStatus(200);
+        $response->assertSee('AIサーバーに接続できませんでした。');
     }
 
     // 必須フィールドにrequired属性とaccept属性が付いていること
