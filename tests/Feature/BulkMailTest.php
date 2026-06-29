@@ -650,6 +650,34 @@ class BulkMailTest extends TestCase
         $response->assertSee('表示する生成結果がありません');
     }
 
+    // 結果画面にExcelダウンロードボタンが表示されること
+    public function test_結果画面にExcelダウンロードボタンが表示されること(): void
+    {
+        $response = $this->withSession([
+            'bulk_results' => [
+                ['subject' => 'テスト件名', 'body' => 'テスト本文'],
+            ],
+        ])->get(route('bulk.result'));
+
+        $response->assertStatus(200);
+        // href属性とテキスト「Excelダウンロード」が同一<a>タグ内に存在することを検証する
+        $downloadUrl = route('bulk.download');
+        $this->assertMatchesRegularExpression(
+            '/<a[^>]+href="' . preg_quote($downloadUrl, '/') . '"[^>]*>\s*Excelダウンロード\s*<\/a>/',
+            $response->content(),
+            '「Excelダウンロード」ボタンのhrefが ' . $downloadUrl . ' になっていません'
+        );
+    }
+
+    // 結果セッションなしの場合はダウンロードボタンが表示されないこと
+    public function test_結果セッションなしの場合はダウンロードボタンが表示されないこと(): void
+    {
+        $response = $this->get(route('bulk.result'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Excelダウンロード');
+    }
+
     // API失敗行のエラーメッセージが結果画面に表示されること
     public function test_API失敗行のエラーメッセージが結果画面に表示されること(): void
     {
