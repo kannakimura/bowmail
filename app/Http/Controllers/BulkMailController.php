@@ -62,6 +62,13 @@ class BulkMailController extends Controller
         ]);
     }
 
+    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-2以降で実装）
+    public function generate()
+    {
+        // TODO: BulkGenerateServiceを呼び出してメールを一括生成する
+        abort(501, '未実装');
+    }
+
     // セッションからパース済みデータを受け取りプレビュー画面を表示する
     public function preview()
     {

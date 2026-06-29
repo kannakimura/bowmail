@@ -23,6 +23,12 @@ Route::post('/bulk/upload', [BulkMailController::class, 'upload'])
 Route::get('/bulk/preview', [BulkMailController::class, 'preview'])
     ->name('bulk.preview');
 
+// プレビュー確認後に一括生成を実行するエンドポイント
+// Anthropic APIを呼ぶため/generateと同様にスロットリングを設定する
+Route::post('/bulk/generate', [BulkMailController::class, 'generate'])
+    ->name('bulk.generate')
+    ->middleware('throttle:5,1');
+
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
 // セッションのflashデータから生成結果を受け取って表示する
 Route::get('/result', [MailGeneratorController::class, 'result'])->name('generate.result');
