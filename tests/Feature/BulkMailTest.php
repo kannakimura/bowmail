@@ -458,6 +458,18 @@ class BulkMailTest extends TestCase
         $response->assertSee('データが1件もありません');
     }
 
+    // データ行0件の場合はLog::errorが呼ばれないこと（ユーザー操作で解決できるためログ不要）
+    public function test_データ行0件の場合はログが記録されないこと(): void
+    {
+        \Illuminate\Support\Facades\Log::shouldReceive('error')->never();
+
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')->once()->andThrow(new EmptyRowsException());
+        });
+
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+    }
+
     // 上限件数超過のExcelをアップロードするとfileエラーが返ること
     public function test_上限件数超過のExcelをアップロードするとfileエラーが返ること(): void
     {
@@ -492,6 +504,19 @@ class BulkMailTest extends TestCase
         $response->assertStatus(200);
         // 上限件数はconfigから取得してハードコードを避ける
         $response->assertSee("一度にアップロードできるリードは{$limit}件まで");
+    }
+
+    // 上限件数超過の場合はLog::errorが呼ばれないこと（ユーザー操作で解決できるためログ不要）
+    public function test_上限件数超過の場合はログが記録されないこと(): void
+    {
+        \Illuminate\Support\Facades\Log::shouldReceive('error')->never();
+
+        $limit = config('bulk_import.max_rows', 500);
+        $this->mock(BulkImportService::class, function ($mock) use ($limit) {
+            $mock->shouldReceive('parse')->once()->andThrow(new TooManyRowsException($limit + 1, $limit));
+        });
+
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
     }
 
     // プレビュー画面に「N件のリードを読み込みました」が表示されること

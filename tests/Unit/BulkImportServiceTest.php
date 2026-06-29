@@ -102,23 +102,20 @@ class BulkImportServiceTest extends TestCase
         $this->service->parse(base_path('tests/fixtures/leads_empty.xlsx'));
     }
 
-    // 上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること
-    public function test_上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること(): void
+    // 上限件数を超える行数を渡すとTooManyRowsExceptionが投げられること
+    public function test_上限件数を超える行数を渡すとTooManyRowsExceptionが投げられること(): void
     {
-        // configのmax_rowsより1件多いrowsを返すようLeadImportをモックして上限超過を再現する
-        $mockImport = \Mockery::mock(\App\Imports\LeadImport::class)->makePartial();
-        $limit      = config('bulk_import.max_rows', 500);
-        $overRows   = collect(array_fill(0, $limit + 1, collect([
+        $this->expectException(TooManyRowsException::class);
+
+        $limit    = config('bulk_import.max_rows', 500);
+        $overRows = collect(array_fill(0, $limit + 1, collect([
             'company_name' => 'テスト株式会社',
             'email'        => 'test@example.com',
             'visited_page' => '料金ページ',
             'phase'        => '比較検討中',
         ])));
-        $mockImport->shouldReceive('getRows')->andReturn($overRows);
 
-        $this->expectException(TooManyRowsException::class);
-
-        // BulkImportServiceのvalidateRowCountを直接テストするためリフレクションで呼ぶ
+        // validateRowCountをリフレクションで直接呼び出してprivateメソッドを検証する
         $method = new \ReflectionMethod(get_class($this->service), 'validateRowCount');
         $method->setAccessible(true);
         $method->invoke($this->service, $overRows);
