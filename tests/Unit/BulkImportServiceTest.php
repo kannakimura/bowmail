@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\EmptyRowsException;
 use App\Exceptions\InvalidColumnException;
+use App\Exceptions\TooManyRowsException;
 use App\Services\BulkImportService;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Tests\TestCase;
@@ -90,6 +92,47 @@ class BulkImportServiceTest extends TestCase
         $this->expectException(InvalidColumnException::class);
 
         $this->service->parse(base_path('tests/fixtures/leads_missing_column.xlsx'));
+    }
+
+    // データ行が0件のExcelをパースするとEmptyRowsExceptionが投げられること
+    public function test_データ行0件のExcelをパースするとEmptyRowsExceptionが投げられること(): void
+    {
+        $this->expectException(EmptyRowsException::class);
+
+        $this->service->parse(base_path('tests/fixtures/leads_empty.xlsx'));
+    }
+
+    // 上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること
+    public function test_上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること(): void
+    {
+        // configのmax_rowsより1件多いrowsを返すようLeadImportをモックして上限超過を再現する
+        $mockImport = \Mockery::mock(\App\Imports\LeadImport::class)->makePartial();
+        $limit      = config('bulk_import.max_rows', 500);
+        $overRows   = collect(array_fill(0, $limit + 1, collect([
+            'company_name' => 'テスト株式会社',
+            'email'        => 'test@example.com',
+            'visited_page' => '料金ページ',
+            'phase'        => '比較検討中',
+        ])));
+        $mockImport->shouldReceive('getRows')->andReturn($overRows);
+
+        $this->expectException(TooManyRowsException::class);
+
+        // BulkImportServiceのvalidateRowCountを直接テストするためリフレクションで呼ぶ
+        $method = new \ReflectionMethod(get_class($this->service), 'validateRowCount');
+        $method->setAccessible(true);
+        $method->invoke($this->service, $overRows);
+    }
+
+    // TooManyRowsExceptionから件数と上限を取得できること
+    public function test_TooManyRowsExceptionから件数と上限が取得できること(): void
+    {
+        $limit = config('bulk_import.max_rows', 500);
+        $count = $limit + 1;
+        $e     = new TooManyRowsException($count, $limit);
+
+        $this->assertSame($count, $e->getCount());
+        $this->assertSame($limit, $e->getLimit());
     }
 
     // 必須列が欠けている場合にgetMissingColumns()で不足列名が取得できること
