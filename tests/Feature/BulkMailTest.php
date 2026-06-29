@@ -369,6 +369,60 @@ class BulkMailTest extends TestCase
         );
     }
 
+    // 必須列が欠けているExcelをアップロードするとfileエラーが返ること
+    public function test_必須列が欠けているExcelをアップロードするとfileエラーが返ること(): void
+    {
+        // ServiceがInvalidColumnExceptionを投げる状況をモックで再現する
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')
+                ->once()
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
+        });
+
+        // back()のリダイレクト先をbulkに確定するためfrom()を設定したうえでカウンタ方式のIPを使う
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertRedirect(route('bulk'));
+        $response->assertSessionHasErrors(['file']);
+    }
+
+    // 列構成不正のエラーメッセージがビューに表示されること
+    public function test_列構成不正のエラーメッセージがビューに表示されること(): void
+    {
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')
+                ->once()
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
+        });
+
+        // from()とfollowingRedirects()との組み合わせのためpostWithUniqueIp()を使わずカウンタ方式で一意なIPを生成する
+        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
+        $response = $this->from(route('bulk'))
+            ->withServerVariables(['REMOTE_ADDR' => $ip])
+            ->followingRedirects()
+            ->post(route('bulk.upload'), $this->validPayload());
+
+        $response->assertStatus(200);
+        $response->assertSee('必須列が見つかりません');
+    }
+
+    // 列構成不正の場合はLog::errorが呼ばれないこと（ユーザー操作で解決できるためログ不要）
+    public function test_列構成不正の場合はログが記録されないこと(): void
+    {
+        \Illuminate\Support\Facades\Log::shouldReceive('error')->never();
+
+        $this->mock(BulkImportService::class, function ($mock) {
+            $mock->shouldReceive('parse')
+                ->once()
+                ->andThrow(new \App\Exceptions\InvalidColumnException([config('bulk_import.columns.email')]));
+        });
+
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+    }
+
     // レンダリングされたアップロード画面のHTMLにインラインスタイルが残っていないこと
     public function test_アップロード画面にインラインスタイルが残っていないこと(): void
     {

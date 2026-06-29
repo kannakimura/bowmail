@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\InvalidColumnException;
 use App\Services\BulkImportService;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Tests\TestCase;
@@ -81,5 +82,26 @@ class BulkImportServiceTest extends TestCase
         $this->assertSame('sample@example.com', $secondRow['email']);
         $this->assertSame('導入事例ページ', $secondRow['visited_page']);
         $this->assertSame('導入検討中', $secondRow['phase']);
+    }
+
+    // 必須列が欠けているExcelをパースするとInvalidColumnExceptionが投げられること
+    public function test_必須列が欠けているExcelをパースするとInvalidColumnExceptionが投げられること(): void
+    {
+        $this->expectException(InvalidColumnException::class);
+
+        $this->service->parse(base_path('tests/fixtures/leads_missing_column.xlsx'));
+    }
+
+    // 必須列が欠けている場合にgetMissingColumns()で不足列名が取得できること
+    public function test_列構成不正の場合に不足列名が取得できること(): void
+    {
+        try {
+            $this->service->parse(base_path('tests/fixtures/leads_missing_column.xlsx'));
+            $this->fail('InvalidColumnExceptionが投げられませんでした');
+        } catch (InvalidColumnException $e) {
+            // leads_missing_column.xlsxにはemail列が欠けているためconfigから日本語ヘッダーを取得して検証する
+            $emailHeader = config('bulk_import.columns.email');
+            $this->assertContains($emailHeader, $e->getMissingColumns());
+        }
     }
 }
