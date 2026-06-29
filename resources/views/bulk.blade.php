@@ -46,7 +46,7 @@
 
                 <div class="form-group">
                     <label for="sender_company">送信者の会社名 <span class="required-mark">*</span></label>
-                    <input type="text" id="sender_company" name="sender_company" placeholder="例：テスト送信会社名" value="{{ old('sender_company') }}" required>
+                    <input type="text" id="sender_company" name="sender_company" placeholder="例：クラウドサーカス株式会社" value="{{ old('sender_company') }}" required>
                 </div>
 
                 <div class="form-group">

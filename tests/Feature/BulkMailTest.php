@@ -773,15 +773,20 @@ class BulkMailTest extends TestCase
         $file = $response->baseResponse->getFile();
         $this->assertFileExists($file->getPathname());
 
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
-        $actualHeaders = $spreadsheet->getActiveSheet()->toArray()[0];
-
-        // メモリを解放してテスト間の干渉を防ぐ
-        $spreadsheet->disconnectWorksheets();
-        unset($spreadsheet);
-
-        // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
-        @unlink($file->getPathname());
+        // load失敗やアサーション失敗時でも必ずクリーンアップされるようfinallyで後処理をまとめる
+        $spreadsheet = null;
+        try {
+            $spreadsheet  = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $actualHeaders = $spreadsheet->getActiveSheet()->toArray()[0];
+        } finally {
+            // メモリを解放してテスト間の干渉を防ぐ
+            if ($spreadsheet !== null) {
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet);
+            }
+            // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+            @unlink($file->getPathname());
+        }
 
         $expectedHeaders = array_values(config('bulk_export.columns', []));
         $this->assertNotEmpty($expectedHeaders, 'bulk_export.columnsが空のためヘッダー検証が無効です');
