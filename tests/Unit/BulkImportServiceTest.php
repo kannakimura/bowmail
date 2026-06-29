@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\EmptyRowsException;
 use App\Exceptions\InvalidColumnException;
+use App\Exceptions\TooManyRowsException;
 use App\Services\BulkImportService;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Tests\TestCase;
@@ -90,6 +92,37 @@ class BulkImportServiceTest extends TestCase
         $this->expectException(InvalidColumnException::class);
 
         $this->service->parse(base_path('tests/fixtures/leads_missing_column.xlsx'));
+    }
+
+    // データ行が0件のExcelをパースするとEmptyRowsExceptionが投げられること
+    public function test_データ行0件のExcelをパースするとEmptyRowsExceptionが投げられること(): void
+    {
+        $this->expectException(EmptyRowsException::class);
+
+        $this->service->parse(base_path('tests/fixtures/leads_empty.xlsx'));
+    }
+
+    // 上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること
+    public function test_上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること(): void
+    {
+        $this->expectException(TooManyRowsException::class);
+
+        // max_rowsをleads_valid.xlsxの行数(2)より小さい1に下げて上限超過を再現する
+        // フィクスチャ行数ではなくconfigで閾値を制御することで設定変更への追従を容易にする
+        config(['bulk_import.max_rows' => 1]);
+
+        $this->service->parse($this->validFile);
+    }
+
+    // TooManyRowsExceptionから件数と上限を取得できること
+    public function test_TooManyRowsExceptionから件数と上限が取得できること(): void
+    {
+        $limit = config('bulk_import.max_rows', 500);
+        $count = $limit + 1;
+        $e     = new TooManyRowsException($count, $limit);
+
+        $this->assertSame($count, $e->getCount());
+        $this->assertSame($limit, $e->getLimit());
     }
 
     // 必須列が欠けている場合にgetMissingColumns()で不足列名が取得できること

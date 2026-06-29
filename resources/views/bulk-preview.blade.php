@@ -38,7 +38,7 @@
         {{-- パース済み行のテーブル表示 --}}
         <div class="card">
             <h2>取り込みデータ確認</h2>
-            <p class="row-count">{{ count($rows) }} 件</p>
+            <p class="row-count">{{ count($rows) }} 件のリードを読み込みました</p>
             <div class="preview-table-wrap">
                 <table class="preview-table">
                     <thead>
