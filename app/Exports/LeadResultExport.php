@@ -33,8 +33,8 @@ class LeadResultExport implements FromCollection, WithHeadings, WithMapping
         $result  = [];
 
         foreach (array_keys($columns) as $key) {
-            // errorキーがある行は件名・本文を空文字にしてリード情報は残す
-            if (isset($row['error']) && in_array($key, ['subject', 'body'], true)) {
+            // errorキーが存在する行（null値含む）は件名・本文を空文字にしてリード情報は残す
+            if (array_key_exists('error', $row) && in_array($key, ['subject', 'body'], true)) {
                 $result[] = '';
             } else {
                 $result[] = $row[$key] ?? '';
