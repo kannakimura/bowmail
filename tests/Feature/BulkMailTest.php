@@ -788,8 +788,11 @@ class BulkMailTest extends TestCase
         // load失敗やアサーション失敗時でも必ずクリーンアップされるようfinallyで後処理をまとめる
         $spreadsheet = null;
         try {
-            $spreadsheet  = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
-            $actualHeaders = $spreadsheet->getActiveSheet()->toArray()[0];
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $rows        = $spreadsheet->getActiveSheet()->toArray();
+            // 行が0件だと[0]アクセスでundefined offsetになりアサーション失敗より先にPHPエラーが出るため先にガードする
+            $this->assertNotEmpty($rows, 'Excelシートに行が存在しません');
+            $actualHeaders = $rows[0];
         } finally {
             // メモリを解放してテスト間の干渉を防ぐ
             if ($spreadsheet !== null) {
