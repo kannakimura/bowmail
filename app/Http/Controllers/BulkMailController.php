@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\EmptyRowsException;
 use App\Exceptions\InvalidColumnException;
 use App\Exceptions\TooManyRowsException;
+use App\Http\Requests\BulkGenerateRequest;
 use App\Http\Requests\BulkUploadRequest;
 use App\Services\BulkImportService;
 use Illuminate\Support\Facades\Log;
@@ -62,18 +63,22 @@ class BulkMailController extends Controller
         ]);
     }
 
-    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-2以降で実装）
-    public function generate()
+    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-4以降で実装）
+    // BulkGenerateRequestでセッション存在チェックを行い切れていればバリデーションエラーを返す
+    public function generate(BulkGenerateRequest $request)
     {
         // TODO: BulkGenerateServiceを呼び出してメールを一括生成する
         abort(501, '未実装');
     }
 
     // セッションからパース済みデータを受け取りプレビュー画面を表示する
+    // flashデータはデフォルトで次の1リクエストで消えるため、generate()まで届くようkeepで延命する
     public function preview()
     {
         $input = session('bulk_input', []);
         $rows  = session('bulk_rows', []);
+
+        session()->keep(['bulk_input', 'bulk_rows']);
 
         return view('bulk-preview', compact('input', 'rows'));
     }

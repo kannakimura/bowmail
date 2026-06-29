@@ -567,10 +567,34 @@ class BulkMailTest extends TestCase
         $response->assertSee('action="' . route('bulk.generate') . '"', false);
     }
 
-    // POST /bulk/generate ルートが存在すること（501を返すスタブ）
-    public function test_一括生成ルートが存在すること(): void
+    // 一括生成のセッション存在チェック：セッションなし時はバリデーションエラーでアップロード画面へ戻る
+    // セッションあり時（実フロー）はgenerate()まで到達する（Phase 2-4実装前はスタブとして501を返す）
+    // セッションなしで一括生成POSTするとsessionエラーが返ること
+    public function test_セッションなしで一括生成するとバリデーションエラーが返ること(): void
     {
-        // Phase 2-2実装前はスタブとして501を返す
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertSessionHasErrors(['session']);
+    }
+
+    // セッションなし時のバリデーション失敗リダイレクト先がアップロード画面であること
+    public function test_セッションなしで一括生成するとアップロード画面へリダイレクトされること(): void
+    {
+        $this->postWithUniqueIp(route('bulk.generate'))
+            ->assertRedirect(route('bulk'));
+    }
+
+    // 実フロー（upload→preview→generate）でflashデータがgenerate()まで届くこと
+    public function test_実フローでセッションデータがgenerate処理まで届くこと(): void
+    {
+        // upload → preview → generate の実フローでflashデータがkeepされることを検証する
+        $this->mockBulkImportService();
+        $this->from(route('bulk'));
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
+
+        // previewでkeepされることでflashデータが次リクエストまで延命する
+        $this->get(route('bulk.preview'));
+
+        // Phase 2-4実装前はスタブとして501を返す（バリデーションエラーにならず処理が進むことを確認）
         $this->postWithUniqueIp(route('bulk.generate'))->assertStatus(501);
     }
 
