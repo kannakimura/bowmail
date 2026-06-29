@@ -746,6 +746,12 @@ class BulkMailTest extends TestCase
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             $contentType
         );
+
+        // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+        // 実装変更でBinaryFileResponse以外になった場合は削除をスキップする
+        if ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+            @unlink($response->baseResponse->getFile()->getPathname());
+        }
     }
 
     // ダウンロードしたExcelの1行目がconfig定義の列ヘッダーと一致すること
