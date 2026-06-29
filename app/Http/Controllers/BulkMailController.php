@@ -7,6 +7,7 @@ use App\Exceptions\InvalidColumnException;
 use App\Exceptions\TooManyRowsException;
 use App\Http\Requests\BulkGenerateRequest;
 use App\Http\Requests\BulkUploadRequest;
+use App\Services\BulkGenerateService;
 use App\Services\BulkImportService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -15,7 +16,10 @@ use Throwable;
 // Excel アップロード → プレビュー → 一括生成 → Excel ダウンロードの流れを担当する
 class BulkMailController extends Controller
 {
-    public function __construct(private readonly BulkImportService $bulkImportService) {}
+    public function __construct(
+        private readonly BulkImportService $bulkImportService,
+        private readonly BulkGenerateService $bulkGenerateService,
+    ) {}
 
     // アップロードフォーム画面を表示する
     public function index()
@@ -63,11 +67,22 @@ class BulkMailController extends Controller
         ]);
     }
 
-    // プレビュー確認後にセッションのリードデータで一括生成を実行する（Phase 2-4以降で実装）
+    // プレビュー確認後にセッションのリードデータでClaude APIを順次呼び出してメールを一括生成する
     // BulkGenerateRequestでセッション存在チェックを行い切れていればバリデーションエラーを返す
+    // 生成結果をflashセッションに保存してPRGパターンで結果画面へリダイレクトする
     public function generate(BulkGenerateRequest $request)
     {
-        // TODO: BulkGenerateServiceを呼び出してメールを一括生成する
+        $rows    = session('bulk_rows', []);
+        $input   = session('bulk_input', []);
+        $results = $this->bulkGenerateService->generateAll($rows, $input);
+
+        return redirect()->route('bulk.result')->with('bulk_results', $results->toArray());
+    }
+
+    // 一括生成結果を表示する（Phase 2-5で実装）
+    public function result()
+    {
+        // TODO: bulk_resultsをセッションから取り出して結果画面を表示する
         abort(501, '未実装');
     }
 
