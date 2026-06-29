@@ -546,16 +546,9 @@ class BulkMailTest extends TestCase
     // プレビュー画面に一括生成ボタンが表示されること
     public function test_プレビュー画面に一括生成ボタンが表示されること(): void
     {
-        $this->mock(BulkImportService::class, function ($mock) {
-            $mock->shouldReceive('parse')->once()->andReturn(collect([
-                collect(['company_name' => 'テスト株式会社', 'email' => 'test@example.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中']),
-            ]));
-        });
-
-        $ip = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
-        $this->from(route('bulk'))
-            ->withServerVariables(['REMOTE_ADDR' => $ip])
-            ->post(route('bulk.upload'), $this->validPayload());
+        $this->mockBulkImportService();
+        $this->from(route('bulk'));
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
         $response = $this->get(route('bulk.preview'));
         $response->assertStatus(200);
@@ -565,16 +558,9 @@ class BulkMailTest extends TestCase
     // プレビュー画面の一括生成フォームがbulk.generateへPOSTすること
     public function test_プレビュー画面の一括生成フォームが正しいactionを持つこと(): void
     {
-        $this->mock(BulkImportService::class, function ($mock) {
-            $mock->shouldReceive('parse')->once()->andReturn(collect([
-                collect(['company_name' => 'テスト株式会社', 'email' => 'test@example.com', 'visited_page' => '料金ページ', 'phase' => '比較検討中']),
-            ]));
-        });
-
-        $ip = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
-        $this->from(route('bulk'))
-            ->withServerVariables(['REMOTE_ADDR' => $ip])
-            ->post(route('bulk.upload'), $this->validPayload());
+        $this->mockBulkImportService();
+        $this->from(route('bulk'));
+        $this->postWithUniqueIp(route('bulk.upload'), $this->validPayload());
 
         $response = $this->get(route('bulk.preview'));
         // action属性にbulk.generateのURLが含まれること
@@ -584,12 +570,8 @@ class BulkMailTest extends TestCase
     // POST /bulk/generate ルートが存在すること（501を返すスタブ）
     public function test_一括生成ルートが存在すること(): void
     {
-        $ip       = '127.0.1.' . ((++self::$ipCounter % 253) + 1);
-        $response = $this->withServerVariables(['REMOTE_ADDR' => $ip])
-            ->post(route('bulk.generate'));
-
         // Phase 2-2実装前はスタブとして501を返す
-        $response->assertStatus(501);
+        $this->postWithUniqueIp(route('bulk.generate'))->assertStatus(501);
     }
 
     // 必須フィールドにrequired属性とaccept属性が付いていること
