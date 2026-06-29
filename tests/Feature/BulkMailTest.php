@@ -724,6 +724,45 @@ class BulkMailTest extends TestCase
         Excel::assertDownloaded('bowmail_results.xlsx');
     }
 
+    // ダウンロードレスポンスのContent-TypeがExcel形式であること
+    // Excel::fake()を使わず実際にExcelを生成してHTTPレスポンスのヘッダーを検証する
+    public function test_ダウンロードレスポンスのContentTypeがExcel形式であること(): void
+    {
+        $results = [
+            ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+        ];
+
+        $response = $this->withSession(['bulk_results' => $results])
+            ->get(route('bulk.download'));
+
+        // Content-Typeにxlsx MIMEタイプが含まれること
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            $response->headers->get('Content-Type')
+        );
+    }
+
+    // ダウンロードしたExcelの1行目がconfig定義の列ヘッダーと一致すること
+    // Excel::fake()を使わず実際に生成したバイナリをPhpSpreadsheetで読み込んで検証する
+    public function test_ダウンロードしたExcelの列ヘッダーがconfig定義と一致すること(): void
+    {
+        $results = [
+            ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+        ];
+
+        $response = $this->withSession(['bulk_results' => $results])
+            ->get(route('bulk.download'));
+
+        // BinaryFileResponseからファイルパスを取得してPhpSpreadsheetで直接読み込む
+        $filePath = $response->baseResponse->getFile()->getPathname();
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $actualHeaders = $spreadsheet->getActiveSheet()->toArray()[0];
+
+        $expectedHeaders = array_values(config('bulk_export.columns', []));
+        $this->assertNotEmpty($expectedHeaders, 'bulk_export.columnsが空のためヘッダー検証が無効です');
+        $this->assertSame($expectedHeaders, $actualHeaders);
+    }
+
     // 必須フィールドにrequired属性とaccept属性が付いていること
     // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
