@@ -80,6 +80,13 @@ class BulkMailController extends Controller
         return redirect()->route('bulk.result')->with('bulk_results', $results->toArray());
     }
 
+    // 生成結果をExcelファイルとしてダウンロードする（Phase 3-3で実装）
+    public function download()
+    {
+        // TODO: BulkExportServiceを呼び出して.xlsxファイルを返す
+        abort(501, '未実装');
+    }
+
     // 一括生成結果をセッションから受け取り結果画面を表示する
     public function result()
     {
