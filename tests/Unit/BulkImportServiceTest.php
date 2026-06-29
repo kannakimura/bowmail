@@ -102,23 +102,13 @@ class BulkImportServiceTest extends TestCase
         $this->service->parse(base_path('tests/fixtures/leads_empty.xlsx'));
     }
 
-    // 上限件数を超える行数を渡すとTooManyRowsExceptionが投げられること
-    public function test_上限件数を超える行数を渡すとTooManyRowsExceptionが投げられること(): void
+    // 上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること
+    public function test_上限件数を超えるExcelをパースするとTooManyRowsExceptionが投げられること(): void
     {
         $this->expectException(TooManyRowsException::class);
 
-        $limit    = config('bulk_import.max_rows', 500);
-        $overRows = collect(array_fill(0, $limit + 1, collect([
-            'company_name' => 'テスト株式会社',
-            'email'        => 'test@example.com',
-            'visited_page' => '料金ページ',
-            'phase'        => '比較検討中',
-        ])));
-
-        // validateRowCountをリフレクションで直接呼び出してprivateメソッドを検証する
-        $method = new \ReflectionMethod(get_class($this->service), 'validateRowCount');
-        $method->setAccessible(true);
-        $method->invoke($this->service, $overRows);
+        // leads_over_limit.xlsxはmax_rows(500)を超える501行を持つフィクスチャ
+        $this->service->parse(base_path('tests/fixtures/leads_over_limit.xlsx'));
     }
 
     // TooManyRowsExceptionから件数と上限を取得できること
