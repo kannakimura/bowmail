@@ -46,11 +46,13 @@ class LeadResultExportTest extends TestCase
     // API失敗行の件名・本文が空文字で出力されること
     public function test_API失敗行の件名と本文が空文字で出力されること(): void
     {
+        // errorの値をnullにすることでisset()への回帰を確実に検知できる
+        // isset($row['error'])だとnull値でfalseになり失敗行として扱われなくなる
         $row = [
             'company_name' => 'テスト株式会社',
             'visited_page' => '料金ページ',
             'phase'        => '比較検討中',
-            'error'        => 'AIサーバーに接続できませんでした。',
+            'error'        => null,
         ];
 
         $export = new LeadResultExport([$row]);
