@@ -11,7 +11,7 @@ use Tests\TestCase;
 // BulkExportServiceのユニットテスト
 class BulkExportServiceTest extends TestCase
 {
-    // export()がResponseを返し、渡したrowsがLeadResultExportに正しく伝播すること
+    // export()がBinaryFileResponseを返し、渡したrowsがLeadResultExportに正しく伝播すること
     public function test_exportがxlsxダウンロードレスポンスを返しrowsが伝播すること(): void
     {
         Excel::fake();
