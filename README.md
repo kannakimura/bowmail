@@ -1,58 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BowMail
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+BtoB 向けリードナーチャリングメール生成ツール。  
+訪問ページ・行動フェーズを入力すると Claude AI がフォローメール文章を自動生成します。
 
-## About Laravel
+## 概要
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+MAツールで「誰がどのページを見たか」は把握できても、そこからフォローメールを書くのは手作業です。  
+BowMail はその空白を埋めるデモアプリです。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **1件生成**: 会社名・訪問ページ・フェーズを入力 → 件名＋本文を即時生成
+- **一括生成**: Excel（.xlsx）をアップロード → 全リードのメールを一括生成 → Excel ダウンロード
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 技術スタック
 
-## Learning Laravel
+| 区分 | 技術 |
+|---|---|
+| バックエンド | Laravel 13 / PHP 8.3 |
+| フロントエンド | Blade / バニラ CSS |
+| AI | Claude API（Anthropic） |
+| Excel 入出力 | maatwebsite/excel 3.1 |
+| テスト | PHPUnit 12 |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## セットアップ
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 必要環境
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- PHP 8.3+
+- Composer
+- Anthropic API キー
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 手順
 
 ```bash
-composer require laravel/boost --dev
+git clone https://github.com/kannakimura/bowmail.git
+cd bowmail
 
-php artisan boost:install
+composer install
+
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`.env` に API キーを設定します。
 
-## Contributing
+```env
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxx
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+開発サーバーを起動します。
 
-## Code of Conduct
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+`http://localhost:8000` でアクセスできます。
 
-## Security Vulnerabilities
+### 一括生成を使う場合（ローカル）
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+10件 × API 呼び出しでタイムアウトが発生する場合、`php.ini` で実行時間を延長してください。
 
-## License
+```ini
+max_execution_time = 300
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 使い方
+
+### 1件生成
+
+1. `http://localhost:8000` にアクセス
+2. 会社名・訪問ページ・フェーズ・送信者情報を入力
+3. 「メールを生成する」ボタンを押す
+4. 生成された件名と本文を確認してコピー
+
+### 一括生成
+
+1. `http://localhost:8000/bulk` にアクセス
+2. 下記フォーマットの `.xlsx` ファイルを用意してアップロード
+3. 送信者名・会社名・メールのトーンを設定して「アップロードしてプレビュー」
+4. プレビュー画面でリスト内容を確認し「一括生成する」を押す
+5. 生成完了後、結果画面から「Excel ダウンロード」で結果ファイルを取得
+
+## Excel ファイル形式
+
+一括生成に使う `.xlsx` ファイルの列構成は以下の通りです。
+
+| 列 | ヘッダー名（1行目） |
+|---|---|
+| A | 会社名 |
+| B | メールアドレス |
+| C | 訪問ページ |
+| D | フェーズ |
+
+## テスト
+
+```bash
+php artisan test
+```
+
+60 テスト、すべて通過することを確認しています。
+
+## ディレクトリ構成（主要部分）
+
+```
+app/
+  Http/Controllers/     # MailGeneratorController, BulkMailController
+  Requests/             # FormRequest（バリデーション）
+  Services/             # GenerateMailService, BulkImportService, BulkGenerateService, BulkExportService
+  Imports/              # LeadImport（maatwebsite/excel）
+  Exports/              # LeadResultExport（maatwebsite/excel）
+  Exceptions/           # InvalidColumnException, EmptyRowsException, TooManyRowsException
+config/
+  bulk_import.php       # 入力列定義・件数上限
+  bulk_export.php       # 出力列定義
+  mail_options.php      # トーン選択肢
+tests/
+  Unit/                 # Service 単体テスト
+  Feature/              # HTTP リクエスト〜レスポンス結合テスト
+  fixtures/             # テスト用 Excel ファイル
+```
+
+## ライセンス
+
+MIT
