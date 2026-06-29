@@ -72,10 +72,13 @@ class BulkMailController extends Controller
     }
 
     // セッションからパース済みデータを受け取りプレビュー画面を表示する
+    // flashデータはデフォルトで次の1リクエストで消えるため、generate()まで届くようkeepで延命する
     public function preview()
     {
         $input = session('bulk_input', []);
         $rows  = session('bulk_rows', []);
+
+        session()->keep(['bulk_input', 'bulk_rows']);
 
         return view('bulk-preview', compact('input', 'rows'));
     }
