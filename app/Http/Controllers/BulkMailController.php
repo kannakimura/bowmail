@@ -36,7 +36,7 @@ class BulkMailController extends Controller
             return back()
                 ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
                 ->withErrors(['file' => '必須列が見つかりません。テンプレートのExcelファイルを使用してください。']);
-        } catch (EmptyRowsException $e) {
+        } catch (EmptyRowsException) {
             // データ行0件はユーザー操作で解決できるためログは不要でエラーメッセージを返す
             return back()
                 ->withInput($request->safe()->only(['sender_name', 'sender_company', 'tone']))
