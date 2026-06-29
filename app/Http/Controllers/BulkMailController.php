@@ -7,6 +7,7 @@ use App\Exceptions\InvalidColumnException;
 use App\Exceptions\TooManyRowsException;
 use App\Http\Requests\BulkGenerateRequest;
 use App\Http\Requests\BulkUploadRequest;
+use App\Services\BulkExportService;
 use App\Services\BulkGenerateService;
 use App\Services\BulkImportService;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,7 @@ class BulkMailController extends Controller
     public function __construct(
         private readonly BulkImportService $bulkImportService,
         private readonly BulkGenerateService $bulkGenerateService,
+        private readonly BulkExportService $bulkExportService,
     ) {}
 
     // アップロードフォーム画面を表示する
@@ -80,17 +82,26 @@ class BulkMailController extends Controller
         return redirect()->route('bulk.result')->with('bulk_results', $results->toArray());
     }
 
-    // 生成結果をExcelファイルとしてダウンロードする（Phase 3-3で実装）
+    // セッションの生成結果をExcelファイルとしてダウンロードする
+    // 結果がない場合はアップロード画面へリダイレクトする
     public function download()
     {
-        // Phase 3-3でBulkExportServiceを呼び出して.xlsxファイルを返す実装に差し替える
-        abort(501, '未実装');
+        $results = session('bulk_results', []);
+
+        if (empty($results)) {
+            return redirect()->route('bulk');
+        }
+
+        return $this->bulkExportService->export($results);
     }
 
     // 一括生成結果をセッションから受け取り結果画面を表示する
+    // bulk_resultsはflashセッションのため次リクエストで消えるが、ダウンロードでも使うためkeepで延命する
     public function result()
     {
         $results = session('bulk_results', []);
+
+        session()->keep(['bulk_results']);
 
         return view('bulk-result', compact('results'));
     }
