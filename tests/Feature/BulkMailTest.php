@@ -675,18 +675,23 @@ class BulkMailTest extends TestCase
     {
         Excel::fake();
 
-        // BulkExportServiceをモックしてExcel::downloadが呼ばれたことを検証する
-        $this->mock(BulkExportService::class, function ($mock) {
-            $mock->shouldReceive('export')->once()->andReturn(
-                Excel::download(new \App\Exports\LeadResultExport([]), 'bowmail_results.xlsx')
-            );
+        $results = [
+            ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+        ];
+
+        // andReturnUsing で export() が実際に呼ばれたタイミングで Excel::download を実行することで
+        // モック設定時の即時評価による誤検知を防ぎ、Controllerが正しい rows を渡したことも検証できる
+        $this->mock(BulkExportService::class, function ($mock) use ($results) {
+            $mock->shouldReceive('export')
+                ->once()
+                ->with($results)
+                ->andReturnUsing(fn (array $rows) => Excel::download(
+                    new \App\Exports\LeadResultExport($rows),
+                    'bowmail_results.xlsx'
+                ));
         });
 
-        $this->withSession([
-            'bulk_results' => [
-                ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
-            ],
-        ])->get(route('bulk.download'));
+        $this->withSession(['bulk_results' => $results])->get(route('bulk.download'));
 
         Excel::assertDownloaded('bowmail_results.xlsx');
     }
