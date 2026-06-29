@@ -23,7 +23,8 @@ class BulkImportService
         $this->validateColumns($filePath);
 
         $import = new LeadImport();
-        Excel::import($import, $filePath);
+        // アップロード一時ファイルは拡張子なしのため自動検出が失敗するので型を明示する
+        Excel::import($import, $filePath, null, \Maatwebsite\Excel\Excel::XLSX);
         $rows = $import->getRows();
 
         $this->validateRowCount($rows);
@@ -42,7 +43,7 @@ class BulkImportService
 
         try {
             $headingImport  = new HeadingRowImport();
-            $actualHeaders  = Excel::toArray($headingImport, $filePath)[0][0] ?? [];
+            $actualHeaders  = Excel::toArray($headingImport, $filePath, null, \Maatwebsite\Excel\Excel::XLSX)[0][0] ?? [];
         } finally {
             HeadingRowFormatter::default($originalFormatter);
         }

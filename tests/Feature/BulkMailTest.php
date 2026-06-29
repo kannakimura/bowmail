@@ -724,6 +724,90 @@ class BulkMailTest extends TestCase
         Excel::assertDownloaded('bowmail_results.xlsx');
     }
 
+    // ダウンロードレスポンスのContent-TypeがExcel形式であること
+    // Excel::fake()を使わず実際にExcelを生成してHTTPレスポンスのヘッダーを検証する
+    public function test_ダウンロードレスポンスのContentTypeがExcel形式であること(): void
+    {
+        $results = [
+            ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+        ];
+
+        $response = $this->withSession(['bulk_results' => $results])
+            ->get(route('bulk.download'));
+
+        // リダイレクト等に変わった場合に原因を切り分けやすくするため先に200を確認する
+        $response->assertOk();
+
+        // アサーション失敗時でも確実にクリーンアップされるようファイルパスを先に退避してfinallyで削除する
+        $tmpPath = ($response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse)
+            ? $response->baseResponse->getFile()->getPathname()
+            : null;
+
+        try {
+            // Content-TypeがnullのままassertStringContainsStringに渡るとTypeErrorになるため
+            // assertNotNullで先にガードしてからMIMEタイプを検証する
+            $contentType = $response->headers->get('Content-Type');
+            $this->assertNotNull($contentType, 'Content-Typeヘッダーが設定されていません');
+            $this->assertStringContainsString(
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                $contentType
+            );
+        } finally {
+            // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+            if ($tmpPath !== null) {
+                @unlink($tmpPath);
+            }
+        }
+    }
+
+    // ダウンロードしたExcelの1行目がconfig定義の列ヘッダーと一致すること
+    // Excel::fake()を使わず実際に生成したバイナリをPhpSpreadsheetで読み込んで検証する
+    public function test_ダウンロードしたExcelの列ヘッダーがconfig定義と一致すること(): void
+    {
+        $results = [
+            ['company_name' => 'A社', 'visited_page' => '料金ページ', 'phase' => '比較検討中', 'subject' => '件名', 'body' => '本文'],
+        ];
+
+        $response = $this->withSession(['bulk_results' => $results])
+            ->get(route('bulk.download'));
+
+        // リダイレクト等に変わった場合に原因を切り分けやすくするため先に200を確認する
+        $response->assertOk();
+
+        // BinaryFileResponse以外に変わった場合にgetFile()で落ちる前に型をアサートして原因を明示する
+        $this->assertInstanceOf(
+            \Symfony\Component\HttpFoundation\BinaryFileResponse::class,
+            $response->baseResponse,
+            'レスポンスがBinaryFileResponseではないためファイルパスを取得できません'
+        );
+
+        // ファイルが存在することを確認してからPhpSpreadsheetで読み込む
+        $file = $response->baseResponse->getFile();
+        $this->assertFileExists($file->getPathname());
+
+        // load失敗やアサーション失敗時でも必ずクリーンアップされるようfinallyで後処理をまとめる
+        $spreadsheet = null;
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $rows        = $spreadsheet->getActiveSheet()->toArray();
+            // 行が0件だと[0]アクセスでundefined offsetになりアサーション失敗より先にPHPエラーが出るため先にガードする
+            $this->assertNotEmpty($rows, 'Excelシートに行が存在しません');
+            $actualHeaders = $rows[0];
+        } finally {
+            // メモリを解放してテスト間の干渉を防ぐ
+            if ($spreadsheet !== null) {
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet);
+            }
+            // BinaryFileResponseが生成した一時ファイルをテスト後に削除してCIのディスク使用量増加を防ぐ
+            @unlink($file->getPathname());
+        }
+
+        $expectedHeaders = array_values(config('bulk_export.columns', []));
+        $this->assertNotEmpty($expectedHeaders, 'bulk_export.columnsが空のためヘッダー検証が無効です');
+        $this->assertSame($expectedHeaders, $actualHeaders);
+    }
+
     // 必須フィールドにrequired属性とaccept属性が付いていること
     // 属性順に依存しないよう正規表現で同一タグ内に両属性が存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
