@@ -37,14 +37,19 @@ class BulkImportServiceTest extends TestCase
     {
         // フィクスチャを拡張子なし一時ファイルにコピーしてアップロード時と同じ状況を再現する
         $tmpPath = tempnam(sys_get_temp_dir(), 'bowmail_test_');
-        copy($this->validFile, $tmpPath);
+        // 環境依存の失敗をテスト本体の失敗と混同しないよう事前条件をアサートする
+        $this->assertNotFalse($tmpPath, '一時ファイルの作成に失敗しました');
+        $this->assertTrue(copy($this->validFile, $tmpPath), '一時ファイルへのコピーに失敗しました');
 
         try {
             $result = $this->service->parse($tmpPath);
             $this->assertInstanceOf(\Illuminate\Support\Collection::class, $result);
             $this->assertNotEmpty($result);
         } finally {
-            @unlink($tmpPath);
+            // tempnamがfalseの場合はunlinkでTypeErrorになるため文字列の場合のみ削除する
+            if (is_string($tmpPath)) {
+                @unlink($tmpPath);
+            }
         }
     }
 
