@@ -35,13 +35,12 @@ class LeadResultExportTest extends TestCase
         $export = new LeadResultExport([$row]);
         $result = $export->map($row);
 
-        $this->assertSame([
-            'テスト株式会社',
-            '料金ページ',
-            '比較検討中',
-            'テスト件名',
-            'テスト本文',
-        ], $result);
+        // 期待値をconfigキー順から組み立てることで列順変更時にテストとconfig定義が同期する
+        $columns  = config('bulk_export.columns', []);
+        $this->assertNotEmpty($columns, 'bulk_export.columnsが空のため列順検証が無効です');
+        $expected = array_map(fn ($key) => $row[$key] ?? '', array_keys($columns));
+
+        $this->assertSame($expected, $result);
     }
 
     // API失敗行の件名・本文が空文字で出力されること
@@ -57,11 +56,15 @@ class LeadResultExportTest extends TestCase
         $export = new LeadResultExport([$row]);
         $result = $export->map($row);
 
-        $this->assertSame('テスト株式会社', $result[0]);
-        $this->assertSame('料金ページ',     $result[1]);
-        $this->assertSame('比較検討中',     $result[2]);
-        $this->assertSame('',               $result[3]); // 件名
-        $this->assertSame('',               $result[4]); // 本文
+        // 期待値をconfigキー順から組み立て、subject/bodyキーは空文字となることを検証する
+        $columns  = config('bulk_export.columns', []);
+        $this->assertNotEmpty($columns, 'bulk_export.columnsが空のため列順検証が無効です');
+        $expected = array_map(
+            fn ($key) => in_array($key, ['subject', 'body'], true) ? '' : ($row[$key] ?? ''),
+            array_keys($columns)
+        );
+
+        $this->assertSame($expected, $result);
     }
 
     // collection()が渡した行数と同じCollectionを返すこと
