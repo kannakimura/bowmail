@@ -4,7 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailGeneratorController;
 use App\Http\Controllers\BulkMailController;
 
-Route::get('/', [MailGeneratorController::class, 'index'])->name('home');
+// トップページは一括生成画面にリダイレクトする
+Route::get('/', fn () => redirect()->route('bulk'))->name('home');
+
+// 1件生成画面
+Route::get('/mail', [MailGeneratorController::class, 'index'])->name('mail');
 
 // 1分間に5回までに制限する（Anthropic APIの無制限消費を防ぐため）
 Route::post('/generate', [MailGeneratorController::class, 'generate'])

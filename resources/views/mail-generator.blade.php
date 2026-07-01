@@ -15,6 +15,8 @@
 
 <div class="container">
 
+    <a href="{{ route('bulk') }}" class="nav-link">← 一括生成に戻る</a>
+
     @if ($errors->has('api'))
         <div class="error-box">{{ $errors->first('api') }}</div>
     @endif

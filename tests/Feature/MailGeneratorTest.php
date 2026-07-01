@@ -127,8 +127,9 @@ class MailGeneratorTest extends TestCase
         $payload = $this->validPayload();
         $payload['tone'] = '不正なトーン';
 
+        // from()でリファラーを/mailに設定しback()が1件生成画面に戻ることを保証する
         // followingRedirects()でリダイレクトを追従し、最終レスポンスのHTMLを検証する
-        $response = $this->followingRedirects()->post('/generate', $payload);
+        $response = $this->from(route('mail'))->followingRedirects()->post('/generate', $payload);
 
         // Bladeの@error('tone')がレンダリングされてエラー文言が画面に出ること
         $response->assertStatus(200);
@@ -323,7 +324,7 @@ class MailGeneratorTest extends TestCase
     // lookaheadで属性順に依存せず同一タグ内にname属性とrequiredが存在することを検証する
     public function test_必須フィールドにrequired属性が付いていること(): void
     {
-        $html = $this->get('/')->content();
+        $html = $this->get(route('mail'))->content();
 
         // lookaheadで属性順非依存・required(?:="[^"]*")?で値付き形式(required="required"等)も許容
         foreach (['visited_page', 'phase', 'tone', 'sender_name', 'sender_company'] as $field) {
@@ -335,19 +336,19 @@ class MailGeneratorTest extends TestCase
         }
     }
 
-    // トップページが正常に表示されること
+    // 1件生成ページが正常に表示されること
     public function test_トップページが表示されること(): void
     {
-        $response = $this->get('/');
+        $response = $this->get(route('mail'));
 
         $response->assertStatus(200);
         $response->assertSee('MailFlow');
     }
 
-    // GETでトップページを開いたとき$inputが未定義で500にならないこと
+    // GETで1件生成ページを開いたとき$inputが未定義で500にならないこと
     public function test_トップページで入力フォームの初期値が未定義エラーにならないこと(): void
     {
-        $response = $this->get('/');
+        $response = $this->get(route('mail'));
 
         // フォームの各inputがsession('old')なしでも正常にレンダリングされること
         $response->assertStatus(200);
