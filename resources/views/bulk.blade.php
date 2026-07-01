@@ -29,6 +29,7 @@
 
     <div class="card">
         <h2>Excelファイルをアップロード</h2>
+        <p class="template-link"><a href="{{ asset('downloads/template.xlsx') }}" download>テンプレートをダウンロード（.xlsx）</a></p>
         <form method="POST" action="{{ route('bulk.upload') }}" enctype="multipart/form-data">
             @csrf
             <div class="form-group form-group--mb20">

@@ -168,3 +168,8 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 
 /* ボタンエリア横並び */
 .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+/* テンプレートダウンロードリンク */
+.template-link { margin: 0 0 16px; font-size: 13px; }
+.template-link a { color: #4f46e5; text-decoration: underline; }
+.template-link a:hover { color: #3730a3; }
