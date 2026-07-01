@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BowMail - アップロード内容の確認</title>
-    <link rel="stylesheet" href="{{ asset('css/bowmail.css') }}">
+    <title>MailFlow - アップロード内容の確認</title>
+    <link rel="stylesheet" href="{{ asset('css/mailflow.css') }}">
 </head>
 <body>
 
 <div class="header">
-    <h1>BowMail</h1>
+    <h1>MailFlow</h1>
     <span>アップロード内容の確認</span>
 </div>
 
@@ -81,7 +81,7 @@
 
 </div>
 
-<div class="footer">BowMail — Powered by Claude AI</div>
+<div class="footer">MailFlow — Powered by Claude AI</div>
 
 </body>
 </html>

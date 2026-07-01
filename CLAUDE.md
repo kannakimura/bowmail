@@ -1,8 +1,8 @@
-# BowMail — Claude向け開発方針
+# MailFlow — Claude向け開発方針
 
 ## プロジェクト概要
 
-- **名称**: BowMail（リードナーチャリングメール生成ツール）
+- **名称**: MailFlow（リードナーチャリングメール生成ツール）
 - **スタック**: Laravel 13 / Blade / Claude API（Anthropic）
 - **目的**: BowNow連携を想定したBtoB向けメール文章自動生成ポートフォリオ
 

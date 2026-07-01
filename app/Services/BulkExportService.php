@@ -12,6 +12,6 @@ class BulkExportService
     // 渡された生成結果配列をLeadResultExport経由で.xlsxファイルとして返す
     public function export(array $rows): BinaryFileResponse
     {
-        return Excel::download(new LeadResultExport($rows), 'bowmail_results.xlsx');
+        return Excel::download(new LeadResultExport($rows), 'mailflow_results.xlsx');
     }
 }

@@ -1,4 +1,4 @@
-# BowMail
+# MailFlow
 
 BtoB 向けリードナーチャリングメール生成ツール。  
 訪問ページ・行動フェーズを入力すると Claude AI がフォローメール文章を自動生成します。
@@ -6,7 +6,7 @@ BtoB 向けリードナーチャリングメール生成ツール。
 ## 概要
 
 MAツールで「誰がどのページを見たか」は把握できても、そこからフォローメールを書くのは手作業です。  
-BowMail はその空白を埋めるデモアプリです。
+MailFlow はその空白を埋めるデモアプリです。
 
 - **1件生成**: 会社名・訪問ページ・フェーズを入力 → 件名＋本文を即時生成
 - **一括生成**: Excel（.xlsx）をアップロード → 全リードのメールを一括生成 → Excel ダウンロード
@@ -32,8 +32,8 @@ BowMail はその空白を埋めるデモアプリです。
 ### 手順
 
 ```bash
-git clone https://github.com/kannakimura/bowmail.git
-cd bowmail
+git clone https://github.com/kannakimura/mailflow.git
+cd mailflow
 
 composer install
 
