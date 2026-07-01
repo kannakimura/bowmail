@@ -31,50 +31,57 @@
 
             <a href="{{ route('bulk.download') }}" class="btn btn-primary">Excelダウンロード</a>
 
-            @foreach ($results as $index => $result)
-                <div class="result-item">
-                    @if (isset($result['error']))
-                        {{-- API失敗行はエラーメッセージを表示する --}}
-                        <button class="accordion-trigger accordion-trigger--error" onclick="toggleAccordion(this)">
-                            <span class="accordion-num"># {{ $index + 1 }}</span>
-                            <span class="accordion-preview">⚠ 生成エラー</span>
-                            <span class="accordion-arrow">▼</span>
-                        </button>
-                        <div class="accordion-body" hidden>
-                            <div class="error-box">
-                                <ul class="error-list">
-                                    <li>{{ $result['error'] }}</li>
-                                </ul>
-                            </div>
-                        </div>
-                    @else
-                        @php
-                            $subject     = $result['subject'] ?? '';
-                            $body        = $result['body'] ?? '';
-                            $companyName = $result['company_name'] ?? '';
-                            // 件名を50文字で丸める
-                            $preview = mb_strimwidth($subject, 0, 50, '…');
-                        @endphp
-                        <button class="accordion-trigger" onclick="toggleAccordion(this)">
-                            <span class="accordion-num"># {{ $index + 1 }}</span>
-                            <span class="accordion-company">{{ $companyName }}</span>
-                            <span class="accordion-divider">|</span>
-                            <span class="accordion-preview">{{ $preview }}</span>
-                            <span class="accordion-arrow">▼</span>
-                        </button>
-                        <div class="accordion-body" hidden>
-                            <div class="subject-box">
-                                <p class="result-label">件名</p>
-                                <div class="result-box">{{ $subject }}</div>
-                            </div>
-                            <div>
-                                <p class="result-label">本文</p>
-                                <div class="result-box">{{ $body }}</div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            @endforeach
+            <div class="preview-table-wrap">
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>会社名</th>
+                            <th>件名（クリックで展開）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($results as $index => $result)
+                        @if (isset($result['error']))
+                            <tr class="result-row result-row--error" onclick="toggleRow(this)">
+                                <td>{{ $index + 1 }}</td>
+                                <td>—</td>
+                                <td class="result-row__subject">⚠ 生成エラー <span class="accordion-arrow">▼</span></td>
+                            </tr>
+                            <tr class="result-detail" hidden>
+                                <td colspan="3">
+                                    <div class="error-box"><ul class="error-list"><li>{{ $result['error'] }}</li></ul></div>
+                                </td>
+                            </tr>
+                        @else
+                            @php
+                                $subject     = $result['subject'] ?? '';
+                                $body        = $result['body'] ?? '';
+                                $companyName = $result['company_name'] ?? '';
+                                $preview     = mb_strimwidth($subject, 0, 50, '…');
+                            @endphp
+                            <tr class="result-row" onclick="toggleRow(this)">
+                                <td>{{ $index + 1 }}</td>
+                                <td class="result-row__company">{{ $companyName }}</td>
+                                <td class="result-row__subject">{{ $preview }} <span class="accordion-arrow">▼</span></td>
+                            </tr>
+                            <tr class="result-detail" hidden>
+                                <td colspan="3">
+                                    <div class="subject-box">
+                                        <p class="result-label">件名</p>
+                                        <div class="result-box">{{ $subject }}</div>
+                                    </div>
+                                    <div>
+                                        <p class="result-label">本文</p>
+                                        <div class="result-box">{{ $body }}</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     @endif
 
@@ -83,11 +90,11 @@
 <div class="footer">MailFlow — Powered by Claude AI</div>
 
 <script>
-function toggleAccordion(btn) {
-    const body = btn.nextElementSibling;
-    const arrow = btn.querySelector('.accordion-arrow');
-    const isOpen = !body.hidden;
-    body.hidden = isOpen;
+function toggleRow(row) {
+    const detail = row.nextElementSibling;
+    const arrow  = row.querySelector('.accordion-arrow');
+    const isOpen = !detail.hidden;
+    detail.hidden = isOpen;
     arrow.textContent = isOpen ? '▼' : '▲';
 }
 </script>

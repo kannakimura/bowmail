@@ -229,3 +229,10 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 
 .accordion-company { flex-shrink: 0; font-weight: 600; color: #1e293b; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
 .accordion-divider { flex-shrink: 0; color: #cbd5e1; }
+
+.result-row { cursor: pointer; }
+.result-row:hover td { background: #f1f5f9; }
+.result-row--error td { color: #b91c1c; }
+.result-row__company { font-weight: 600; white-space: nowrap; }
+.result-row__subject { color: #475569; }
+.result-detail td { background: #f8fafc; padding: 16px 14px; }
