@@ -26,7 +26,7 @@ class BulkExportServiceTest extends TestCase
         $this->assertInstanceOf(BinaryFileResponse::class, $response);
 
         // LeadResultExportに渡した行データがcollection()を通じて正しく伝播すること
-        Excel::assertDownloaded('bowmail_results.xlsx', function (LeadResultExport $export) use ($rows) {
+        Excel::assertDownloaded('mailflow_results.xlsx', function (LeadResultExport $export) use ($rows) {
             return $export->collection()->toArray() === $rows;
         });
     }

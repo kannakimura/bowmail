@@ -341,7 +341,7 @@ class MailGeneratorTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('BowMail');
+        $response->assertSee('MailFlow');
     }
 
     // GETでトップページを開いたとき$inputが未定義で500にならないこと
