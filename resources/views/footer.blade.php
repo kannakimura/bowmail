@@ -10,7 +10,7 @@
 <body>
 
 <div class="header">
-    <h1>MailFlow</h1>
+    <h1><a href="{{ route('bulk') }}" class="header-logo">MailFlow</a></h1>
     <span>メールフッター登録</span>
     <a href="{{ asset('downloads/template.xlsx') }}" download class="header-template-link">テンプレートをダウンロード（.xlsx）</a>
 </div>
