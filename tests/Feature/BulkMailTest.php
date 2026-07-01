@@ -77,6 +77,15 @@ class BulkMailTest extends TestCase
         $response->assertSee('name="file"', false);
     }
 
+    // アップロード画面にテンプレートダウンロードリンクが含まれること
+    public function test_アップロード画面にテンプレートダウンロードリンクが含まれること(): void
+    {
+        $response = $this->get('/bulk');
+
+        $response->assertSee('downloads/template.xlsx', false);
+        $response->assertSee('テンプレートをダウンロード', false);
+    }
+
     // アップロード画面に送信者情報の入力フォームが含まれること
     public function test_アップロード画面に送信者情報フォームが含まれること(): void
     {
