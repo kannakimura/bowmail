@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MailGeneratorController;
 use App\Http\Controllers\BulkMailController;
+use App\Http\Controllers\FooterController;
 
 // トップページは一括生成画面にリダイレクトする
 Route::get('/', fn () => redirect()->route('bulk'))->name('home');
@@ -41,3 +42,7 @@ Route::get('/bulk/download', [BulkMailController::class, 'download'])->name('bul
 // PRGパターンのGETエンドポイント：POST成功後にリダイレクトされる先
 // セッションのflashデータから生成結果を受け取って表示する
 Route::get('/result', [MailGeneratorController::class, 'result'])->name('generate.result');
+
+// メールフッター登録
+Route::get('/footer', [FooterController::class, 'index'])->name('footer');
+Route::post('/footer', [FooterController::class, 'save'])->name('footer.save');

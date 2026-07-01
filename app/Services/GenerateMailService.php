@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\FooterController;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -106,6 +107,12 @@ PROMPT;
 
         // 本文が取れなかった場合はレスポンス全体を表示するフォールバック
         $body = trim($bodyMatch[1] ?? $text);
+
+        // 登録済みフッターがあれば本文末尾に追加する
+        $footer = FooterController::loadFooter();
+        if ($footer !== '') {
+            $body .= "\n\n" . $footer;
+        }
 
         return compact('subject', 'body');
     }

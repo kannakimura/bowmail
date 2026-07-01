@@ -12,6 +12,7 @@
 <div class="header">
     <h1>MailFlow</h1>
     <span>一括メール生成</span>
+    <a href="{{ route('footer') }}" class="header-template-link">メールフッター登録</a>
     <a href="{{ asset('downloads/template.xlsx') }}" download class="header-template-link">テンプレートをダウンロード（.xlsx）</a>
 </div>
 
