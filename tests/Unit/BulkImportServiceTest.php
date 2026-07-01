@@ -36,7 +36,7 @@ class BulkImportServiceTest extends TestCase
     public function test_拡張子なし一時ファイルでもパースできること(): void
     {
         // フィクスチャを拡張子なし一時ファイルにコピーしてアップロード時と同じ状況を再現する
-        $tmpPath = tempnam(sys_get_temp_dir(), 'bowmail_test_');
+        $tmpPath = tempnam(sys_get_temp_dir(), 'mailflow_test_');
         // 環境依存の失敗をテスト本体の失敗と混同しないよう事前条件をアサートする
         $this->assertNotFalse($tmpPath, '一時ファイルの作成に失敗しました');
         $this->assertTrue(copy($this->validFile, $tmpPath), '一時ファイルへのコピーに失敗しました');

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BowMail - リードナーチャリングメール生成</title>
-    <link rel="stylesheet" href="{{ asset('css/bowmail.css') }}">
+    <title>MailFlow - リードナーチャリングメール生成</title>
+    <link rel="stylesheet" href="{{ asset('css/mailflow.css') }}">
 </head>
 <body>
 
 <div class="header">
-    <h1>BowMail</h1>
+    <h1>MailFlow</h1>
     <span>リードナーチャリングメール生成ツール</span>
 </div>
 
@@ -114,7 +114,7 @@
 
 </div>
 
-<div class="footer">BowMail — Powered by Claude AI</div>
+<div class="footer">MailFlow — Powered by Claude AI</div>
 
 <script>
 // 再生成ボタン：requestSubmit()でsubmitイベントを発火してローディング表示も動かす

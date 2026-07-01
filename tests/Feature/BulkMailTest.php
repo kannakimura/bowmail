@@ -715,13 +715,13 @@ class BulkMailTest extends TestCase
                 ->with($results)
                 ->andReturnUsing(fn (array $rows) => Excel::download(
                     new \App\Exports\LeadResultExport($rows),
-                    'bowmail_results.xlsx'
+                    'mailflow_results.xlsx'
                 ));
         });
 
         $this->withSession(['bulk_results' => $results])->get(route('bulk.download'));
 
-        Excel::assertDownloaded('bowmail_results.xlsx');
+        Excel::assertDownloaded('mailflow_results.xlsx');
     }
 
     // ダウンロードレスポンスのContent-TypeがExcel形式であること
