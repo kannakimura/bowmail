@@ -28,10 +28,9 @@ Route::get('/bulk/preview', [BulkMailController::class, 'preview'])
     ->name('bulk.preview');
 
 // プレビュー確認後に一括生成を実行するエンドポイント
-// Anthropic APIを呼ぶため/generateと同様にスロットリングを設定する
+// 件数×API呼び出しで時間がかかるためスロットリングは設けない
 Route::post('/bulk/generate', [BulkMailController::class, 'generate'])
-    ->name('bulk.generate')
-    ->middleware('throttle:5,1');
+    ->name('bulk.generate');
 
 // PRGパターンのGETエンドポイント：一括生成成功後にリダイレクトされる結果画面
 Route::get('/bulk/result', [BulkMailController::class, 'result'])->name('bulk.result');
