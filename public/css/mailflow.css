@@ -236,3 +236,17 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 .result-row__company { font-weight: 600; white-space: nowrap; }
 .result-row__subject { color: #475569; }
 .result-detail td { background: #f8fafc; padding: 16px 14px; }
+
+/* 一括生成ボタン ローディング状態 */
+.btn--loading { opacity: 0.6; cursor: not-allowed; display: inline-flex; align-items: center; gap: 8px; }
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

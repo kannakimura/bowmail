@@ -72,9 +72,9 @@
             <div class="btn-row">
                 <a href="{{ route('bulk') }}" class="btn btn--gray">やり直す</a>
                 {{-- POSTでgenerate処理を起動しサーバー側でセッションのリードデータを参照して生成へ進む --}}
-                <form method="POST" action="{{ route('bulk.generate') }}">
+                <form method="POST" action="{{ route('bulk.generate') }}" id="generate-form">
                     @csrf
-                    <button type="submit" class="btn btn--primary">一括生成する</button>
+                    <button type="submit" class="btn btn--primary" id="generate-btn">一括生成する</button>
                 </form>
             </div>
         </div>
@@ -83,6 +83,15 @@
 </div>
 
 <div class="footer">MailFlow — Powered by Claude AI</div>
+
+<script>
+document.getElementById('generate-form').addEventListener('submit', function () {
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.classList.add('btn--loading');
+    btn.innerHTML = '<span class="spinner"></span>生成中...';
+});
+</script>
 
 </body>
 </html>
