@@ -63,10 +63,13 @@ class BulkMailController extends Controller
                 ->withErrors(['file' => 'ファイルの読み込みに失敗しました。破損していないxlsxファイルをアップロードしてください。']);
         }
 
-        return redirect()->route('bulk.preview')->with([
+        // flashではなく通常セッションに保存することでプレビュー→生成間のセッション切れを防ぐ
+        session([
             'bulk_input' => $request->safe()->only(['sender_name', 'sender_company', 'tone']),
             'bulk_rows'  => $rows->map(fn ($row) => $row->toArray())->toArray(),
         ]);
+
+        return redirect()->route('bulk.preview');
     }
 
     // プレビュー確認後にセッションのリードデータでClaude APIを順次呼び出してメールを一括生成する
@@ -78,6 +81,9 @@ class BulkMailController extends Controller
         $rows    = session('bulk_rows', []);
         $input   = session('bulk_input', []);
         $results = $this->bulkGenerateService->generateAll($rows, $input);
+
+        // 生成完了後はアップロードデータをセッションから削除する
+        session()->forget(['bulk_rows', 'bulk_input']);
 
         return redirect()->route('bulk.result')->with('bulk_results', $results->toArray());
     }
@@ -112,8 +118,6 @@ class BulkMailController extends Controller
     {
         $input = session('bulk_input', []);
         $rows  = session('bulk_rows', []);
-
-        session()->keep(['bulk_input', 'bulk_rows']);
 
         return view('bulk-preview', compact('input', 'rows'));
     }
