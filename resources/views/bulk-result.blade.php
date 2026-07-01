@@ -33,23 +33,41 @@
 
             @foreach ($results as $index => $result)
                 <div class="result-item">
-                    <p class="result-label"># {{ $index + 1 }}</p>
-
                     @if (isset($result['error']))
                         {{-- API失敗行はエラーメッセージを表示する --}}
-                        <div class="error-box">
-                            <ul class="error-list">
-                                <li>{{ $result['error'] }}</li>
-                            </ul>
+                        <button class="accordion-trigger accordion-trigger--error" onclick="toggleAccordion(this)">
+                            <span class="accordion-num"># {{ $index + 1 }}</span>
+                            <span class="accordion-preview">⚠ 生成エラー</span>
+                            <span class="accordion-arrow">▼</span>
+                        </button>
+                        <div class="accordion-body" hidden>
+                            <div class="error-box">
+                                <ul class="error-list">
+                                    <li>{{ $result['error'] }}</li>
+                                </ul>
+                            </div>
                         </div>
                     @else
-                        <div class="subject-box">
-                            <p class="result-label">件名</p>
-                            <div class="result-box">{{ $result['subject'] ?? '' }}</div>
-                        </div>
-                        <div>
-                            <p class="result-label">本文</p>
-                            <div class="result-box">{{ $result['body'] ?? '' }}</div>
+                        @php
+                            $subject = $result['subject'] ?? '';
+                            $body    = $result['body'] ?? '';
+                            // 件名と本文を連結して50文字プレビューを作る
+                            $preview = mb_strimwidth($subject . '　' . $body, 0, 50, '…');
+                        @endphp
+                        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+                            <span class="accordion-num"># {{ $index + 1 }}</span>
+                            <span class="accordion-preview">{{ $preview }}</span>
+                            <span class="accordion-arrow">▼</span>
+                        </button>
+                        <div class="accordion-body" hidden>
+                            <div class="subject-box">
+                                <p class="result-label">件名</p>
+                                <div class="result-box">{{ $subject }}</div>
+                            </div>
+                            <div>
+                                <p class="result-label">本文</p>
+                                <div class="result-box">{{ $body }}</div>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -60,6 +78,16 @@
 </div>
 
 <div class="footer">MailFlow — Powered by Claude AI</div>
+
+<script>
+function toggleAccordion(btn) {
+    const body = btn.nextElementSibling;
+    const arrow = btn.querySelector('.accordion-arrow');
+    const isOpen = !body.hidden;
+    body.hidden = isOpen;
+    arrow.textContent = isOpen ? '▼' : '▲';
+}
+</script>
 
 </body>
 </html>
