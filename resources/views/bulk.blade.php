@@ -11,6 +11,7 @@
 <div class="header">
     <h1>MailFlow</h1>
     <span>一括メール生成</span>
+    <a href="{{ asset('downloads/template.xlsx') }}" download class="header-template-link">テンプレートをダウンロード（.xlsx）</a>
 </div>
 
 <div class="container">
@@ -29,7 +30,6 @@
 
     <div class="card">
         <h2>Excelファイルをアップロード</h2>
-        <p class="template-link"><a href="{{ asset('downloads/template.xlsx') }}" download>テンプレートをダウンロード（.xlsx）</a></p>
         <form method="POST" action="{{ route('bulk.upload') }}" enctype="multipart/form-data">
             @csrf
             <div class="form-group form-group--mb20">
