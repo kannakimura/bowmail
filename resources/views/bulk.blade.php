@@ -15,7 +15,7 @@
 
 <div class="container">
 
-    <a href="{{ route('home') }}" class="nav-link">← 1件生成に戻る</a>
+    <a href="{{ route('mail') }}" class="nav-link">1件生成はこちら →</a>
 
     @if ($errors->any())
         <div class="error-box">
