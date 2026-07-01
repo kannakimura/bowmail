@@ -67,6 +67,7 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
     margin-bottom: 20px;
     font-size: 14px;
 }
+textarea::placeholder { color: #c0c0c0; }
 .success-box {
     background: #f0fdf4;
     border: 1px solid #86efac;
