@@ -20,8 +20,10 @@ class BulkGenerateService
     {
         return collect($rows)->map(function (array $row) use ($input) {
             // GenerateMailServiceが期待するデータ形式に合わせてリード情報と送信者情報をマージする
-            $data = array_merge($row, $input);
-            return $this->generateMailService->generate($data);
+            $data   = array_merge($row, $input);
+            $result = $this->generateMailService->generate($data);
+            // 結果画面で送信先会社名を表示するためにリード情報を結果に付加する
+            return array_merge(['company_name' => $row['company_name'] ?? ''], $result);
         });
     }
 }

@@ -226,3 +226,6 @@ input[type="file"] { padding: 7px 12px; background: #f9fafb; cursor: pointer; }
 
 /* Excelダウンロードボタンと一覧の間隔 */
 .btn-primary { display: inline-block; margin-bottom: 20px; }
+
+.accordion-company { flex-shrink: 0; font-weight: 600; color: #1e293b; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.accordion-divider { flex-shrink: 0; color: #cbd5e1; }

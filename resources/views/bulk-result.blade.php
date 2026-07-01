@@ -49,13 +49,16 @@
                         </div>
                     @else
                         @php
-                            $subject = $result['subject'] ?? '';
-                            $body    = $result['body'] ?? '';
-                            // 件名と本文を連結して50文字プレビューを作る
-                            $preview = mb_strimwidth($subject . '　' . $body, 0, 50, '…');
+                            $subject     = $result['subject'] ?? '';
+                            $body        = $result['body'] ?? '';
+                            $companyName = $result['company_name'] ?? '';
+                            // 件名を50文字で丸める
+                            $preview = mb_strimwidth($subject, 0, 50, '…');
                         @endphp
                         <button class="accordion-trigger" onclick="toggleAccordion(this)">
                             <span class="accordion-num"># {{ $index + 1 }}</span>
+                            <span class="accordion-company">{{ $companyName }}</span>
+                            <span class="accordion-divider">|</span>
                             <span class="accordion-preview">{{ $preview }}</span>
                             <span class="accordion-arrow">▼</span>
                         </button>
