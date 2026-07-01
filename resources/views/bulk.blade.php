@@ -34,7 +34,10 @@
             @csrf
             <div class="form-group form-group--mb20">
                 <label for="file">リストファイル（.xlsx）<span class="required-mark"> *</span></label>
-                <input type="file" id="file" name="file" accept=".xlsx" required>
+                <div class="drop-zone" id="drop-zone">
+                    <span class="drop-zone__text" id="drop-zone-text">ここにファイルをドロップ<br><small>またはクリックして選択</small></span>
+                    <input type="file" id="file" name="file" accept=".xlsx" required class="drop-zone__input">
+                </div>
                 @error('file')<span class="field-error">{{ $message }}</span>@enderror
                 <span class="hint">列構成：会社名 / メールアドレス / 訪問ページ / フェーズ</span>
             </div>
@@ -73,6 +76,45 @@
 </div>
 
 <div class="footer">MailFlow — Powered by Claude AI</div>
+
+<script>
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file');
+const dropText = document.getElementById('drop-zone-text');
+
+// ファイルが選択・ドロップされたときにファイル名を表示する
+function showFileName(file) {
+    dropText.innerHTML = '<span class="drop-zone__filename">📄 ' + file.name + '</span>';
+    dropZone.classList.add('drop-zone--selected');
+}
+
+// クリックでファイル選択ダイアログを開く（inputのopacity:0で代替しているため不要だが念のため）
+fileInput.addEventListener('change', function () {
+    if (this.files[0]) showFileName(this.files[0]);
+});
+
+// ドラッグ中のスタイル切り替え
+dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', function () {
+    dropZone.classList.remove('dragover');
+});
+
+// ドロップ時にinputへファイルをセットする
+dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    // DataTransferを使ってinputのfilesを書き換える
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+    showFileName(file);
+});
+</script>
 
 </body>
 </html>
