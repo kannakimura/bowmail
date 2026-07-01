@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <title>MailFlow - リードナーチャリングメール生成</title>
     <link rel="stylesheet" href="{{ asset('css/mailflow.css') }}">
 </head>
